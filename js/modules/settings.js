@@ -6,6 +6,8 @@ import {
 } from '../utils.js';
 import { run, refresh } from '../data.js';
 import { settingsPanel as calendarsPanel } from './calendar.js';
+import { settingsPanel as kidModePanel } from './kidmode.js';
+import { pinHash, validPin, newId } from './kids.js';
 
 const PALETTE = ['#1976d2', '#8e24aa', '#2e7d32', '#ef6c00', '#c62828', '#00838f', '#6d4c41', '#3949ab'];
 
@@ -60,10 +62,12 @@ export function view() {
       <div class="panel-head"><h3>👨‍👩‍👧‍👦 Family members</h3>
         ${isParent ? '<button class="btn primary sm" data-action="member-new">＋ Add member</button>' : ''}</div>
       ${state.members.map(memberRow).join('')}
-      <p class="muted small">Kids don't need their own email or login. Add them here; kid-friendly profiles with a PIN come with the Rewards system.</p>
+      <p class="muted small">Kids don't need their own email or login. They use Kid mode on a shared device, with an optional PIN.</p>
     </section>
 
     ${calendarsPanel()}
+
+    ${state.kidsMissing ? '' : kidModePanel()}
 
     <section class="panel">
       <h3>🔑 Invite another adult</h3>
@@ -92,7 +96,7 @@ function memberForm(m = {}) {
         <input id="m-name" name="display_name" required maxlength="40" value="${esc(m.display_name || '')}" placeholder="First name or nickname"></div>
       <div class="field-row">
         <div class="field"><label for="m-role">Role</label>
-          <select id="m-role" name="role" ${you ? 'disabled' : ''}>
+          <select id="m-role" name="role" ${you ? 'disabled' : ''} data-toggle="member-role">
             <option value="parent" ${m.role === 'parent' ? 'selected' : ''}>Parent</option>
             <option value="child" ${m.role !== 'parent' ? 'selected' : ''}>Child</option>
           </select>
@@ -100,6 +104,12 @@ function memberForm(m = {}) {
         <div class="field"><label for="m-bday">Birthday (optional)</label>
           <input id="m-bday" type="date" name="birthday" value="${esc(m.birthday || '')}"></div>
       </div>
+      ${state.kidsMissing ? '' : `<div class="field kid-pin-field" ${(m.role || 'child') === 'child' && !you ? '' : 'hidden'}>
+        <label for="m-pin">Kid mode PIN (optional, 4 digits)</label>
+        <input id="m-pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="new-password"
+          placeholder="${m.pin_hash ? 'PIN is set. Type a new one to change it' : 'No PIN'}">
+        ${m.pin_hash ? '<label class="check opt"><input type="checkbox" name="pin_clear" value="1"> <span>Remove PIN</span></label>' : ''}
+      </div>`}
       <div class="field"><label>Color</label>
         <div class="swatches">${PALETTE.map(c => `<label class="swatch" style="--c:${c}">
           <input type="radio" name="color" value="${c}" ${c === color ? 'checked' : ''} aria-label="Color ${c}"><span></span></label>`).join('')}</div></div>
@@ -109,6 +119,13 @@ function memberForm(m = {}) {
       </div>
     </form>`;
 }
+
+export const toggles = {
+  'member-role': el => {
+    const f = el.closest('form').querySelector('.kid-pin-field');
+    if (f) f.hidden = el.value !== 'child';
+  },
+};
 
 export const actions = {
   'member-new': () => openModal(memberForm()),
@@ -169,9 +186,16 @@ export const forms = {
       color: d.color || PALETTE[0],
       birthday: d.birthday || null,
     };
+    const id = d.id || newId();
+    if (d.pin) {
+      if (!validPin(d.pin)) { toast('The PIN must be 4 digits.', 'error'); return; }
+      row.pin_hash = await pinHash(id, d.pin);
+    } else if (d.pin_clear || row.role !== 'child') {
+      if (existing?.pin_hash) row.pin_hash = null;
+    }
     const query = d.id
       ? sb.from('family_members').update(row).eq('id', d.id)
-      : sb.from('family_members').insert({ ...row, family_id: state.me.family_id, sort_order: state.members.length });
+      : sb.from('family_members').insert({ ...row, ...(row.pin_hash ? { id } : {}), family_id: state.me.family_id, sort_order: state.members.length });
     if (await run(query, d.id ? 'Changes saved' : `${row.display_name} added`)) {
       closeModal();
       refresh('members');

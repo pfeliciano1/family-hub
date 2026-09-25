@@ -9,6 +9,8 @@ import { groceryRow } from './grocery.js';
 import { heroWeather, weatherCard } from './weather.js';
 import { upcomingSpecialDays, specialRow } from './birthdays.js';
 import { todayCard } from './calendar.js';
+import { homeCard as rewardsCard } from './rewards.js';
+import { homeCard as routinesCard } from './habits.js';
 
 function countdownsCard() {
   const list = upcomingCountdowns().filter(c => c.show_on_dashboard).slice(0, 4);
@@ -63,7 +65,7 @@ function quickAddCard() {
       <button data-action="task-new">＋ Task</button>
       <button data-action="grocery-new">＋ Grocery</button>
       <button data-action="countdown-new">＋ Countdown</button>
-      <button data-action="member-new">＋ Family member</button>
+      <button data-action="chore-new">＋ Chore</button>
       <button data-action="event-new">＋ Event</button>
       <button disabled title="Arrives with meal planning in Alpha 0.7">＋ Meal</button>
     </div></div>`;
@@ -84,9 +86,9 @@ export function view() {
       ${tasksCard()}
       ${soonCard('🍽️', 'Dinner Tonight', 'Alpha 0.7', 'Tonight\'s meal from the weekly plan, with a link to the recipe.')}
       ${groceryCard()}
-      ${soonCard('⭐', 'Rewards', 'Alpha 0.6', 'Each child\'s points and the prize they\'re working toward.')}
+      ${rewardsCard()}
       ${birthdaysCard()}
-      ${soonCard('❤️', 'Routines & Habits', 'Alpha 0.6', 'Morning and night routines and healthy habits, with progress like 4/5 done.')}
+      ${routinesCard()}
       ${weatherCard()}
       ${quickAddCard()}
     </div>`;

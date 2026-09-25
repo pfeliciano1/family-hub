@@ -1,11 +1,12 @@
 // Tasks: one-off to-dos for anyone in the family.
-// (Recurring chores with points arrive with Rewards in Alpha 0.6.)
+// Repeating chores with points live in chores.js (the Chores tab).
 import { sb } from '../supabase.js';
 import { state, update } from '../state.js';
 import {
   esc, safeColor, parseDate, startOfToday, daysBetween, fmtDate, toISODate, openModal, closeModal,
 } from '../utils.js';
 import { run, refresh } from '../data.js';
+import { tabView as choresTab, pendingCompletions } from './chores.js';
 
 function dueInfo(t) {
   if (!t.due_date) return null;
@@ -49,16 +50,23 @@ export function view() {
   const open = sortOpen(state.tasks.filter(t => !t.is_done));
   const done = state.tasks.filter(t => t.is_done).sort((a, b) => (b.done_at || '').localeCompare(a.done_at || ''));
   const list = filter === 'done' ? done : open;
+  const waiting = pendingCompletions().length;
+  const tabs = `<div class="tabs" role="tablist">
+      <button class="${filter === 'open' ? 'active' : ''}" data-action="task-filter" data-filter="open">To do (${open.length})</button>
+      <button class="${filter === 'done' ? 'active' : ''}" data-action="task-filter" data-filter="done">Done (${done.length})</button>
+      <button class="${filter === 'chores' ? 'active' : ''}" data-action="task-filter" data-filter="chores">Chores${waiting ? ` <span class="badge">${waiting}</span>` : ''}</button>
+    </div>`;
+  if (filter === 'chores') {
+    return `<div class="page-title"><h2>✅ Tasks & Chores</h2>
+      <button class="btn primary" data-action="chore-new">＋ New chore</button></div>${tabs}${choresTab()}`;
+  }
   return `<div class="page-title"><h2>✅ Tasks & Chores</h2>
       <button class="btn primary" data-action="task-new">＋ New task</button></div>
-    <div class="tabs" role="tablist">
-      <button class="${filter !== 'done' ? 'active' : ''}" data-action="task-filter" data-filter="open">To do (${open.length})</button>
-      <button class="${filter === 'done' ? 'active' : ''}" data-action="task-filter" data-filter="done">Done (${done.length})</button>
-    </div>
+    ${tabs}
     <div class="panel">${list.length ? list.map(t => taskRow(t, true)).join('')
       : `<div class="empty"><p>${filter === 'done' ? 'Finished tasks will show up here.' : 'Nothing on the list. 🎉'}</p>
          ${filter === 'done' ? '' : '<button class="btn primary" data-action="task-new">Add a task</button>'}</div>`}</div>
-    <p class="muted small">Recurring chores that earn points arrive with the Rewards system in Alpha 0.6.</p>`;
+    <p class="muted small">Repeating chores that earn points are on the Chores tab.</p>`;
 }
 
 function form(t = {}) {

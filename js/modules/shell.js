@@ -10,6 +10,9 @@ import * as settings from './settings.js';
 import * as weather from './weather.js';
 import * as birthdays from './birthdays.js';
 import * as calendar from './calendar.js';
+import * as rewards from './rewards.js';
+import * as routines from './routines.js';
+import * as habits from './habits.js';
 
 // Sections that are built. Everything else in NAV shows a roadmap page.
 const VIEWS = {
@@ -21,6 +24,9 @@ const VIEWS = {
   weather: weather.view,
   birthdays: birthdays.view,
   calendar: calendar.view,
+  rewards: rewards.view,
+  routines: routines.view,
+  habits: habits.view,
 };
 
 const MOBILE_TABS = ['home', 'calendar', 'tasks', 'grocery'];
@@ -60,6 +66,7 @@ export function shellView() {
         <small>${m.role === 'parent' ? 'Parent' : 'Child'}</small></div></div>`).join('')}
       <div class="divider"></div>
       <nav class="nav">${navLink(SETTINGS)}
+        <button data-action="kid-mode-start"><span>🧒</span>Kid mode</button>
         <button data-action="tv-toggle"><span>📺</span>TV Display</button></nav>
     </aside>
 
@@ -67,7 +74,7 @@ export function shellView() {
       ${renderView()}
       <footer class="footer">
         <span>${state.live ? '<span class="live">● Live sync on</span>' : '<span class="offline">○ Connecting…</span>'}</span>
-        <span>Family Hub • Alpha 0.5${state.tv ? ' • TV Display' : ''}</span>
+        <span>Family Hub • Alpha 0.6${state.tv ? ' • TV Display' : ''}</span>
       </footer>
     </main>
 
@@ -114,6 +121,7 @@ export const actions = {
     <div class="more-grid">
       ${[...NAV, SETTINGS].map(n => `<a href="#/${n.id}" data-action="close-modal" class="${n.soon ? 'is-soon' : ''}">
         <span>${n.icon}</span>${esc(n.short || n.label)}</a>`).join('')}
+      <button data-action="kid-mode-start"><span>🧒</span>Kid mode</button>
       <button data-action="tv-toggle"><span>📺</span>TV Display</button>
     </div>
     <div class="modal-actions"><button class="btn" data-action="close-modal">Close</button></div>`),

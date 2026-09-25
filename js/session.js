@@ -8,6 +8,8 @@ import { loadEvents } from './modules/calendar.js';
 const EMPTY = {
   me: null, family: null, members: [], countdowns: [], tasks: [], grocery: [],
   calendars: [], calendarsMissing: false, events: null,
+  kidsMissing: false, rewards: [], chores: [], completions: [], claims: [], points: [], balances: {},
+  routines: [], steps: [], checks: [], habits: [], habitLogs: [],
   weather: null, locResults: [], live: false,
 };
 

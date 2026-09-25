@@ -1,11 +1,12 @@
 -- =====================================================================
--- Family Hub — Alpha 0.5 database setup
+-- Family Hub — Alpha 0.6 database setup
 --
 -- How to run: Supabase dashboard → SQL Editor → New query →
 -- paste this whole file → Run.
 --
 -- Safe to run more than once: it skips anything that already exists.
--- Upgrading from 0.4? Just run this whole file again; your data stays.
+-- Upgrading from an earlier version? Just run this whole file again;
+-- your data stays.
 -- If Supabase warns that the query contains "drop" statements, that's
 -- expected — it only drops and re-creates the security rules below.
 -- =====================================================================
@@ -136,6 +137,167 @@ create index if not exists calendars_family_idx on public.calendars (family_id);
 
 
 -- ---------------------------------------------------------------------
+-- 3b. Kids (Alpha 0.6): chores, points, rewards, routines, habits
+-- ---------------------------------------------------------------------
+
+-- PINs for Kid mode on shared devices. These are a convenience lock for
+-- a family tablet, not a security feature: family logins can read them.
+alter table public.families      add column if not exists parent_pin_hash text;
+alter table public.family_members add column if not exists pin_hash text;
+
+create table if not exists public.rewards (
+  id         uuid primary key default gen_random_uuid(),
+  family_id  uuid not null default public.my_family_id()
+             references public.families(id) on delete cascade,
+  title      text not null check (length(trim(title)) > 0),
+  icon       text not null default '🎁',
+  cost       integer not null check (cost > 0 and cost <= 100000),
+  member_id  uuid references public.family_members(id) on delete cascade,  -- empty = any child
+  is_active  boolean not null default true,
+  created_at timestamptz not null default now()
+);
+create index if not exists rewards_family_idx on public.rewards (family_id);
+
+-- The prize each child is saving up for.
+alter table public.family_members
+  add column if not exists goal_reward_id uuid references public.rewards(id) on delete set null;
+
+create table if not exists public.chores (
+  id             uuid primary key default gen_random_uuid(),
+  family_id      uuid not null default public.my_family_id()
+                 references public.families(id) on delete cascade,
+  title          text not null check (length(trim(title)) > 0),
+  icon           text not null default '🧹',
+  assigned_to    uuid not null references public.family_members(id) on delete cascade,
+  points         integer not null default 1 check (points >= 0 and points <= 1000),
+  frequency      text not null default 'daily' check (frequency in ('daily', 'weekly', 'once')),
+  days           smallint[] not null default '{}',   -- weekly: 0 = Sunday … 6 = Saturday
+  due_date       date,                               -- once: the day it's due
+  needs_approval boolean not null default true,
+  is_active      boolean not null default true,
+  created_at     timestamptz not null default now()
+);
+create index if not exists chores_family_idx on public.chores (family_id);
+
+create table if not exists public.chore_completions (
+  id          uuid primary key default gen_random_uuid(),
+  family_id   uuid not null default public.my_family_id()
+              references public.families(id) on delete cascade,
+  chore_id    uuid not null references public.chores(id) on delete cascade,
+  member_id   uuid not null references public.family_members(id) on delete cascade,
+  for_date    date not null,
+  status      text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  points      integer not null default 0,
+  created_at  timestamptz not null default now(),
+  decided_at  timestamptz,
+  unique (chore_id, member_id, for_date)
+);
+create index if not exists chore_completions_family_idx on public.chore_completions (family_id, for_date);
+
+create table if not exists public.reward_claims (
+  id         uuid primary key default gen_random_uuid(),
+  family_id  uuid not null default public.my_family_id()
+             references public.families(id) on delete cascade,
+  reward_id  uuid references public.rewards(id) on delete set null,
+  member_id  uuid not null references public.family_members(id) on delete cascade,
+  title      text not null,
+  cost       integer not null check (cost > 0),
+  status     text not null default 'pending' check (status in ('pending', 'approved', 'denied')),
+  created_at timestamptz not null default now(),
+  decided_at timestamptz
+);
+create index if not exists reward_claims_family_idx on public.reward_claims (family_id, created_at);
+
+-- Every point earned or spent. A balance is the sum for that person.
+-- ref_key stops the same thing from being counted twice
+-- (e.g. two parents approving the same chore at once).
+create table if not exists public.point_entries (
+  id         uuid primary key default gen_random_uuid(),
+  family_id  uuid not null default public.my_family_id()
+             references public.families(id) on delete cascade,
+  member_id  uuid not null references public.family_members(id) on delete cascade,
+  amount     integer not null check (amount between -100000 and 100000 and amount <> 0),
+  reason     text not null,
+  kind       text not null default 'bonus' check (kind in ('chore', 'routine', 'bonus', 'reward', 'adjust')),
+  ref_key    text unique,
+  created_by uuid default auth.uid(),
+  created_at timestamptz not null default now()
+);
+create index if not exists point_entries_family_idx on public.point_entries (family_id, created_at);
+
+create table if not exists public.routines (
+  id         uuid primary key default gen_random_uuid(),
+  family_id  uuid not null default public.my_family_id()
+             references public.families(id) on delete cascade,
+  member_id  uuid not null references public.family_members(id) on delete cascade,
+  name       text not null check (length(trim(name)) > 0),
+  icon       text not null default '☀️',
+  bonus      integer not null default 0 check (bonus >= 0 and bonus <= 1000),  -- points for finishing
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists routines_family_idx on public.routines (family_id);
+
+create table if not exists public.routine_steps (
+  id         uuid primary key default gen_random_uuid(),
+  family_id  uuid not null default public.my_family_id()
+             references public.families(id) on delete cascade,
+  routine_id uuid not null references public.routines(id) on delete cascade,
+  title      text not null check (length(trim(title)) > 0),
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists routine_steps_family_idx on public.routine_steps (family_id);
+
+create table if not exists public.routine_checks (
+  id         uuid primary key default gen_random_uuid(),
+  family_id  uuid not null default public.my_family_id()
+             references public.families(id) on delete cascade,
+  step_id    uuid not null references public.routine_steps(id) on delete cascade,
+  for_date   date not null,
+  created_at timestamptz not null default now(),
+  unique (step_id, for_date)
+);
+create index if not exists routine_checks_family_idx on public.routine_checks (family_id, for_date);
+
+create table if not exists public.habits (
+  id         uuid primary key default gen_random_uuid(),
+  family_id  uuid not null default public.my_family_id()
+             references public.families(id) on delete cascade,
+  member_id  uuid not null references public.family_members(id) on delete cascade,
+  title      text not null check (length(trim(title)) > 0),
+  icon       text not null default '❤️',
+  created_at timestamptz not null default now()
+);
+create index if not exists habits_family_idx on public.habits (family_id);
+
+create table if not exists public.habit_logs (
+  id         uuid primary key default gen_random_uuid(),
+  family_id  uuid not null default public.my_family_id()
+             references public.families(id) on delete cascade,
+  habit_id   uuid not null references public.habits(id) on delete cascade,
+  for_date   date not null,
+  created_at timestamptz not null default now(),
+  unique (habit_id, for_date)
+);
+create index if not exists habit_logs_family_idx on public.habit_logs (family_id, for_date);
+
+-- Everyone's point balance in one call (a long history can exceed the
+-- number of rows the app loads at once).
+create or replace function public.points_balances()
+returns table (member_id uuid, balance bigint, earned bigint)
+language sql stable security invoker set search_path = public
+as $$
+  select member_id,
+         coalesce(sum(amount), 0),
+         coalesce(sum(amount) filter (where amount > 0), 0)
+  from public.point_entries
+  where family_id = public.my_family_id()
+  group by member_id;
+$$;
+
+
+-- ---------------------------------------------------------------------
 -- 4. Onboarding: create a family, or join one with an invite code
 -- ---------------------------------------------------------------------
 
@@ -224,6 +386,16 @@ alter table public.countdowns     enable row level security;
 alter table public.tasks          enable row level security;
 alter table public.grocery_items  enable row level security;
 alter table public.calendars      enable row level security;
+alter table public.rewards           enable row level security;
+alter table public.chores            enable row level security;
+alter table public.chore_completions enable row level security;
+alter table public.reward_claims     enable row level security;
+alter table public.point_entries     enable row level security;
+alter table public.routines          enable row level security;
+alter table public.routine_steps     enable row level security;
+alter table public.routine_checks    enable row level security;
+alter table public.habits            enable row level security;
+alter table public.habit_logs        enable row level security;
 
 -- families
 drop policy if exists "Members can view their family" on public.families;
@@ -288,6 +460,70 @@ create policy "Family can manage calendars" on public.calendars
   using (family_id = public.my_family_id())
   with check (family_id = public.my_family_id());
 
+-- Kids tables (0.6): same rule, one family only
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['rewards', 'chores', 'chore_completions', 'reward_claims', 'point_entries',
+                           'routines', 'routine_steps', 'routine_checks', 'habits', 'habit_logs'] loop
+    execute format('drop policy if exists "Family can manage %s" on public.%I', t, t);
+    execute format('create policy "Family can manage %s" on public.%I for all to authenticated
+                    using (family_id = public.my_family_id())
+                    with check (family_id = public.my_family_id())', t, t);
+  end loop;
+end;
+$$;
+
+-- Records that point to a person, chore, reward, routine, or habit must
+-- point to one in the same family.
+create or replace function public.same_family_check()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+declare
+  row_json jsonb := to_jsonb(new);
+  ref record;
+  ok boolean;
+begin
+  for ref in
+    select v.tbl, row_json ->> v.col as id
+    from (values
+      ('family_members', 'member_id'),
+      ('family_members', 'assigned_to'),
+      ('rewards',        'reward_id'),
+      ('rewards',        'goal_reward_id'),
+      ('chores',         'chore_id'),
+      ('routines',       'routine_id'),
+      ('routine_steps',  'step_id'),
+      ('habits',         'habit_id')
+    ) as v(tbl, col)
+    where row_json ->> v.col is not null
+  loop
+    execute format('select exists (select 1 from public.%I where id = $1 and family_id = $2)', ref.tbl)
+      into ok using ref.id::uuid, new.family_id;
+    if not ok then
+      raise exception 'That item belongs to a different family.';
+    end if;
+  end loop;
+  return new;
+end;
+$$;
+
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['tasks', 'calendars', 'family_members', 'rewards', 'chores', 'chore_completions',
+                           'reward_claims', 'point_entries', 'routines', 'routine_steps',
+                           'routine_checks', 'habits', 'habit_logs'] loop
+    execute format('drop trigger if exists same_family on public.%I', t);
+    execute format('create trigger same_family before insert or update on public.%I
+                    for each row execute function public.same_family_check()', t);
+  end loop;
+end;
+$$;
+
 
 -- ---------------------------------------------------------------------
 -- 6. Access grants
@@ -298,31 +534,40 @@ create policy "Family can manage calendars" on public.calendars
 grant usage on schema public to authenticated;
 
 revoke all on public.families, public.family_members, public.countdowns,
-              public.tasks, public.grocery_items, public.calendars from anon;
+              public.tasks, public.grocery_items, public.calendars,
+              public.rewards, public.chores, public.chore_completions, public.reward_claims,
+              public.point_entries, public.routines, public.routine_steps, public.routine_checks,
+              public.habits, public.habit_logs from anon;
 
 grant select on public.families to authenticated;
-grant update (name, location_name, latitude, longitude, temp_unit)
+grant update (name, location_name, latitude, longitude, temp_unit, parent_pin_hash)
   on public.families to authenticated;
 
 -- user_id is deliberately left out: logins are only linked through
 -- create_family / join_family, never edited directly.
 grant select, delete on public.family_members to authenticated;
-grant insert (family_id, display_name, role, color, birthday, sort_order)
+grant insert (id, family_id, display_name, role, color, birthday, sort_order, pin_hash, goal_reward_id)
   on public.family_members to authenticated;
-grant update (display_name, role, color, birthday, sort_order)
+grant update (display_name, role, color, birthday, sort_order, pin_hash, goal_reward_id)
   on public.family_members to authenticated;
 
 grant select, insert, update, delete
-  on public.countdowns, public.tasks, public.grocery_items, public.calendars to authenticated;
+  on public.countdowns, public.tasks, public.grocery_items, public.calendars,
+     public.rewards, public.chores, public.chore_completions, public.reward_claims,
+     public.point_entries, public.routines, public.routine_steps, public.routine_checks,
+     public.habits, public.habit_logs to authenticated;
 
 revoke all on function public.my_family_id()              from public, anon;
 revoke all on function public.i_am_parent()               from public, anon;
 revoke all on function public.create_family(text, text)   from public, anon;
 revoke all on function public.join_family(text, text)     from public, anon;
+revoke all on function public.points_balances()           from public, anon;
+revoke all on function public.same_family_check()         from public, anon;
 grant execute on function public.my_family_id()            to authenticated;
 grant execute on function public.i_am_parent()             to authenticated;
 grant execute on function public.create_family(text, text) to authenticated;
 grant execute on function public.join_family(text, text)   to authenticated;
+grant execute on function public.points_balances()         to authenticated;
 
 
 -- ---------------------------------------------------------------------
@@ -333,7 +578,9 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['families', 'family_members', 'countdowns', 'tasks', 'grocery_items', 'calendars'] loop
+  foreach t in array array['families', 'family_members', 'countdowns', 'tasks', 'grocery_items', 'calendars',
+                           'rewards', 'chores', 'chore_completions', 'reward_claims', 'point_entries',
+                           'routines', 'routine_steps', 'routine_checks', 'habits', 'habit_logs'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

@@ -46,7 +46,7 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - **Security:** Row Level Security on every table. People can only see their own family's data. Signed-out visitors can see nothing. Logins can only be linked to a family through the create/join functions, never edited directly. "Automatically expose new tables" is off, so every table is explicitly granted.
 - **Code structure:** plain JavaScript modules, no build step, so files can be uploaded straight to GitHub. One module per section; each registers its own buttons, forms, and checkboxes.
 - **Weather:** Open-Meteo instead of a keyed API, to keep $0 and avoid storing an API key.
-- **Kid access (planned):** profile + PIN on shared devices instead of email logins, arriving with Rewards.
+- **Kid access (built in 0.6):** profile + PIN on shared devices (Kid mode) instead of email logins.
 - **Google Calendar (built in 0.5):** start by reading each calendar's private "secret address in iCal format" through a small server function, which avoids Google's OAuth setup and its 7-day token expiry for unverified apps. Events are still created in the Google Calendar app. Two-way sync can come later if needed.
 
 ### Testing
@@ -56,7 +56,7 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 ---
 
 ## Alpha 0.5 — Calendar
-**Status:** Current (built 2026-09-25; needs the database update and server function deployed)
+**Status:** Completed. Deployed 2026-09-25; Paul connected his Google calendar and confirmed events show in Family Hub.
 
 ### Built
 - **Calendars in Settings:** connect any number of Google calendars by their "Secret address in iCal format", each assigned to a family member (their color) or the whole family. Catches the common mistakes (web link or public address instead of the secret one).
@@ -82,14 +82,33 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 
 ---
 
-## Next Development Priorities
+## Alpha 0.6 — Kids
+**Status:** Current (built 2026-09-25; needs the database script run again)
 
-### Alpha 0.6 — Kids
-5. Recurring chores with points
-6. Rewards: goals, prizes, progress, parent approval, point history
-7. Routines (morning/night) with 4/5-style progress
-8. Healthy habits with streaks
-9. Kid profiles with PIN on shared devices
+### Built
+- **Chores** (Chores tab on Tasks & Chores): every day, certain weekdays, or once; points per chore; optional parent approval; pause without deleting. Missed one-time chores stay on the list marked Late.
+- **Points ledger:** every point earned or spent is one row, so balances are always explainable. A unique key per source (chore, routine day, reward request) makes double approvals harmless. Balances come from a database function so a long history never hits Supabase's 1,000-row limit.
+- **Rewards page:** each child's balance and goal with a progress bar, prizes (for any child or one child), "Waiting for your OK" for chores and reward requests, give/take points with a reason, and the point history. Getting the goal prize clears the goal.
+- **Routines:** steps (one per line), progress like 4/5, optional bonus points when every step is done (taken back if a step is unchecked). Checks reset daily. Editing steps keeps today's checks for steps that stay.
+- **Habits:** once-a-day check-off, last 7 days as dots, streak 🔥 counting today or ending yesterday, a toast at 3, 7, 14, 30, 50, and 100 days.
+- **Kid mode:** picker with each child's picture, optional 4-digit PIN per child, parent PIN to leave, stays on after a reload on that device. Kids see their chores, routines, habits, goal, and rewards they can ask for. Kid check-offs of chores that need approval wait for a parent.
+- **Home:** Rewards card (balances, goals, waiting count) and Routines & Habits card replace the coming-soon cards. Quick Add has ＋ Chore.
+
+### Decisions
+- **Kid PINs are a convenience lock, not security.** Kids don't have logins; Kid mode runs on a parent's signed-in device. PIN hashes are stored in the database and readable by family logins. Real per-kid logins can come later if needed.
+- Parents checking off a chore counts as approval.
+- Removing a reward hides it, so past requests and history keep their names.
+- A database trigger now checks that anything pointing at a person, chore, reward, routine, or habit points at one in the same family (also applied to tasks and calendars).
+- If the 0.6 database update hasn't been run, the rest of the app keeps working and the kids sections explain what to do.
+
+### Testing
+- Database script run on top of the 0.5 test database, then again: data kept; kids tables isolated between families; another family can't add a chore or points for your child even knowing the ID; duplicate point keys rejected; signed-out access denied.
+- Headless browser: parent and kid chore check-offs, approvals, un-checking removes points, weekly chore form, goals, bonus points, reward request and approval (balance and goal update), routine bonus, routine step edits keep order, habit streak toast, wrong and right PINs for kid and parent, Kid mode surviving a reload, the no-database-update state, and phone layouts. No errors.
+- Not yet tested against Paul's live Supabase project.
+
+---
+
+## Next Development Priorities
 
 ### Alpha 0.7 — Food
 10. Weekly meal planner, Dinner Tonight card
@@ -132,11 +151,11 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 |---|---|---|---|
 | BUG-001 | Bug | Fixed (0.2) | No way to exit TV Display Mode after sidebar disappeared |
 | UI-001 | Visual | Fixed (0.3) | Large blue decorative shape behind weather card |
-| UI-002 | Visual | Planned (0.6) | Routines & Habits card with per-routine lists and 4/5 progress |
+| UI-002 | Visual | Done (0.6) | Routines & Habits card with per-routine lists and 4/5 progress |
 | FEAT-001 | Feature | Done (0.4) | Cloud synchronization |
 | FEAT-002 | Feature | Done (0.5) | Google Calendar integration (read-only, via secret iCal addresses) |
-| FEAT-003 | Feature | Done (0.4) | Authentication and family roles (kid PIN profiles in 0.6) |
-| FEAT-004 | Feature | Partial (0.4) | Tasks done; chores and rewards in 0.6 |
+| FEAT-003 | Feature | Done (0.6) | Authentication, family roles, and kid PIN profiles (Kid mode) |
+| FEAT-004 | Feature | Done (0.6) | Tasks, chores with points, and rewards |
 | FEAT-005 | Feature | Partial (0.4) | Grocery list done; meals and recipes in 0.7 |
 | FEAT-006 | Feature | Done (0.5) | Weather and clothing engine, with activity-aware tips |
 | FEAT-007 | Feature | Partial (0.4) | TV mode wake lock, full screen, large text; auto-rotation later |
@@ -153,3 +172,4 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - **0.3** — Removed distracting weather-area decoration and added development documentation
 - **0.4** — Real foundation: accounts, shared database, live sync, tasks, groceries, countdowns, birthdays, live weather with clothing suggestions
 - **0.5** — Calendar: Google calendars combined by family member, Today card, day/week/month views, weather tips for events, + Event
+- **0.6** — Kids: chores with points and approvals, rewards and goals, routines, habits with streaks, Kid mode with PINs

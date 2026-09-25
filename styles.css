@@ -1,4 +1,4 @@
-/* Family Hub — Alpha 0.5 */
+/* Family Hub — Alpha 0.6 */
 
 :root {
   --navy: #0b2447;
@@ -336,6 +336,106 @@ code { background: #eef4fb; padding: 1px 6px; border-radius: 5px; }
 .tv .ev-time { font-size: 15px; }
 .tv .plan-ahead { font-size: 15px; }
 
+/* ---------- Kids: chores, rewards, routines, habits ---------- */
+.badge { display: inline-block; background: var(--warn); color: #fff; border-radius: 99px; font-size: 11px; padding: 0 7px; margin-left: 4px; }
+.due.done-pts { color: var(--ok); font-weight: 700; }
+.kid-block { margin: 6px 0 14px; }
+.kid-block h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 14px; }
+.kid-block .avatar { width: 26px; height: 26px; font-size: 11px; }
+.big-ic { font-size: 24px; width: 32px; text-align: center; flex: none; }
+.member-row.faded { opacity: .55; }
+.approval { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); font-size: 14px; }
+.approval:last-child { border-bottom: 0; }
+.approval .mr-main small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.icon-pick { display: flex; flex-wrap: wrap; gap: 6px; }
+.icon-pick input, .day-pick input { position: absolute; opacity: 0; }
+.icon-pick span { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 9px; border: 1px solid var(--line); font-size: 20px; cursor: pointer; background: #fff; }
+.icon-pick input:checked + span { border-color: var(--blue); box-shadow: 0 0 0 2px #cfe4ff; background: #f0f7ff; }
+.icon-pick input:focus-visible + span, .day-pick input:focus-visible + span { outline: 3px solid #90c2f5; }
+.day-pick { display: flex; flex-wrap: wrap; gap: 6px; }
+.day-pick span { display: inline-block; padding: 7px 10px; border-radius: 99px; border: 1px solid var(--line); font-size: 13px; font-weight: 600; cursor: pointer; background: #fff; }
+.day-pick input:checked + span { background: var(--navy); color: #fff; border-color: var(--navy); }
+textarea { width: 100%; padding: 10px 11px; border: 1px solid #cdd9e6; border-radius: 9px; background: #fff; resize: vertical; }
+
+.stars { font-weight: 800; color: #b26a00; white-space: nowrap; }
+.bar { height: 10px; border-radius: 99px; background: #edf2f7; overflow: hidden; margin: 5px 0; }
+.bar span { display: block; height: 100%; border-radius: 99px; background: var(--c); transition: width .3s; }
+.kid-sum { padding: 8px 0; border-bottom: 1px solid var(--line-soft); }
+.kid-sum:last-of-type { border-bottom: 0; }
+.kid-sum-top { display: flex; align-items: center; gap: 9px; font-size: 14px; }
+.kid-sum-top b { flex: 1; }
+.kid-sum .goal small { color: var(--muted); font-size: 12px; }
+.kid-sum.big .kid-sum-top { font-size: 18px; }
+.kid-sum.big .stars { font-size: 22px; }
+.kid-sum.big { border: 0; margin-bottom: 8px; }
+.kid-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.kid-grid > .panel { margin: 0; }
+.kid-grid + .settings-grid, .kid-grid + p { margin-top: 14px; }
+.hist { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line-soft); font-size: 14px; }
+.hist:last-child { border-bottom: 0; }
+.hist .avatar { width: 26px; height: 26px; font-size: 11px; }
+.hist small { display: block; color: var(--muted); font-size: 11px; }
+.hist .plus { color: var(--ok); }
+.hist .minus { color: var(--warn); }
+.more.attention { font-weight: 700; color: #b26a00; }
+h3.who { display: flex; align-items: center; gap: 9px; }
+
+.routine { border: 1px solid var(--line); border-radius: 11px; padding: 10px 12px; margin-bottom: 10px; }
+.routine.finished { border-color: #a5d6a7; background: #f4fbf4; }
+.routine-head { display: flex; align-items: center; gap: 8px; }
+.routine-head b { flex: 1; }
+.routine-count { font-weight: 800; color: var(--text-2); }
+.check.step { padding: 6px 0; font-size: 14px; }
+.check.step.on span { text-decoration: line-through; color: var(--muted); }
+.habit { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line-soft); font-size: 14px; }
+.habit:last-child { border-bottom: 0; }
+.week-dots { display: flex; gap: 3px; flex: none; }
+.week-dots i { width: 9px; height: 9px; border-radius: 50%; background: #e3eaf2; }
+.week-dots i.on { background: var(--ok); }
+.streak { font-weight: 800; min-width: 44px; text-align: right; flex: none; }
+.streak.none { color: #b3c0cf; font-weight: 400; }
+.rh-row { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid var(--line-soft); }
+.rh-row:last-child { border-bottom: 0; }
+.rh-row > div { display: flex; flex-wrap: wrap; gap: 5px; }
+.rh { font-size: 12px; background: #f4f8ff; border-radius: 99px; padding: 3px 9px; }
+.rh.ok { background: #e8f5e9; color: #1b5e20; }
+.pin-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.pin-row .field { flex: 1; min-width: 120px; margin: 0; }
+.pin-input { font-size: 28px !important; letter-spacing: 12px; text-align: center; }
+
+/* Kid mode */
+.kid-app { min-height: 100vh; padding: 18px 18px calc(18px + var(--safe-bottom)); background: linear-gradient(160deg, color-mix(in srgb, var(--kid, #1976d2) 14%, #f4f8fc), #f4f8fc 55%); }
+.kid-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+.kid-hello { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 220px; }
+.kid-hello h1 { margin: 0; font-size: 30px; }
+.kid-hello p { margin: 2px 0 0; color: var(--text-2); }
+.kid-stars { text-align: center; background: #fff; border-radius: 14px; padding: 8px 18px; border: 1px solid var(--line); }
+.kid-stars .stars { font-size: 30px; display: block; }
+.kid-stars small { color: var(--muted); }
+.kid-actions { display: flex; gap: 6px; }
+.kid-card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+.kid-card h2 { margin: 0 0 10px; font-size: 20px; }
+.kid-goal { margin-bottom: 14px; }
+.kid-goal .bar { height: 16px; }
+.kid-goal small { color: var(--text-2); font-size: 14px; }
+.kid-app .task { font-size: 17px; padding: 11px 0; }
+.kid-app .check input { width: 24px; height: 24px; }
+.kid-app .check.step { font-size: 16px; padding: 8px 0; }
+.kid-reward { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line-soft); }
+.kid-reward:last-child { border-bottom: 0; }
+.kid-reward small { display: block; color: var(--muted); }
+.kid-reward.waiting { justify-content: space-between; color: #b26a00; font-weight: 600; }
+.kid-picker { max-width: 760px; margin: 8vh auto 0; text-align: center; }
+.kid-picker h1 { font-size: 36px; }
+.kid-faces { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; margin: 26px 0 34px; }
+.kid-face {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; background: #fff; border: 2px solid var(--line);
+  border-radius: 20px; padding: 18px 22px; min-width: 150px; font-size: 20px;
+}
+.kid-face:hover { border-color: var(--c); }
+.kid-face small { color: var(--muted); font-size: 12px; }
+.avatar.xl { width: 88px; height: 88px; font-size: 32px; }
+
 /* ---------- Dialogs & messages ---------- */
 .modal-backdrop {
   position: fixed; inset: 0; background: rgba(7, 23, 45, .55); z-index: 60;
@@ -429,11 +529,18 @@ code { background: #eef4fb; padding: 1px 6px; border-radius: 5px; }
   .m-ev, .m-more { display: none; }
   .m-dots { display: flex; }
   .cal-nav b { width: 100%; margin: 4px 0 0; }
+  .kid-grid { grid-template-columns: 1fr; }
+  .week-dots { display: none; }
+  .approval { flex-wrap: wrap; }
+  .approval .row-actions { width: 100%; justify-content: flex-end; }
+  .kid-hello h1 { font-size: 24px; }
+  .kid-app { padding: 12px 12px calc(18px + var(--safe-bottom)); padding-top: calc(12px + var(--safe-top)); }
+  .kid-face { min-width: 130px; padding: 14px; }
   .tv .main { padding: 12px; }
   .tv .grid { grid-template-columns: 1fr; }
   .footer { flex-direction: column; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .toast, .exit-tv { transition: none; }
+  .toast, .exit-tv, .bar span { transition: none; }
 }

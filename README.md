@@ -1,10 +1,10 @@
-# Family Hub — Alpha 0.5
+# Family Hub — Alpha 0.6
 
 A private family command center: shared calendar, tasks, groceries, countdowns,
 weather, and more, on every device in the house. Runs at $0/month on
 GitHub Pages (hosting) and Supabase (database, logins, live sync).
 
-## What works in Alpha 0.5
+## What works in Alpha 0.6
 
 - Email + password accounts, password reset
 - Create a family, or join one with an invite code
@@ -21,8 +21,17 @@ GitHub Pages (hosting) and Supabase (database, logins, live sync).
   with Today, day, week, and month views
 - Weather tips for your plans ("Soccer at 5:30 PM: rain likely, pack a rain jacket")
 - + Event opens Google Calendar with the details filled in
+- Chores that repeat (every day, certain weekdays, or once) and earn points,
+  with a parent OK before points are given
+- Rewards: point balances, a goal each child saves for, prizes to ask for,
+  bonus points, and a point history
+- Routines (morning, bedtime) with steps and progress like 4/5, plus
+  optional bonus points for finishing
+- Habits with daily check-offs, the last 7 days, and streaks 🔥
+- Kid mode: a kid-sized screen for a shared tablet, with a PIN per child and
+  a parent PIN to leave
 
-Rewards, routines, habits, meals, and the rest are on the roadmap
+Meals, recipes, lists, and the rest are on the roadmap
 (see `DEVELOPMENT_LOG.md`).
 
 ## First-time setup
@@ -60,7 +69,10 @@ a Parent, they should type the same name so their profile gets linked.
 ### 6. Set up the calendar
 See **Setting up the calendar** below.
 
-### 7. Install on phones and tablets
+### 7. Set up the kids features
+See **Setting up chores, rewards, and Kid mode** below.
+
+### 8. Install on phones and tablets
 - **iPhone / iPad (Safari):** Share → Add to Home Screen
 - **Samsung / Android (Chrome):** ⋮ menu → Add to home screen / Install app
 
@@ -101,6 +113,34 @@ and paste the new address.
 Calendars refresh every 15 minutes and whenever the app is reopened. Events
 you add in Google Calendar usually appear within a few minutes.
 
+## Setting up chores, rewards, and Kid mode
+**A. Update the database.** In Supabase's **SQL Editor**, open a new query,
+paste all of `database/setup.sql`, and click **Run** (the usual "destructive
+operations" warning is expected). It adds the kids tables and keeps your data.
+
+**B. Upload the new app files** to GitHub the usual way and hard refresh
+(Ctrl+Shift+R). The footer should say **Alpha 0.6**.
+
+**C. Set things up in Family Hub:**
+1. **Tasks & Chores → Chores → ＋ New chore.** Pick who, how many points, and
+   how often. Leave "A parent approves it" on if you want to check the work.
+2. **Rewards → ＋ New reward.** Add prizes with a point cost, then pick what
+   each child is saving for.
+3. **Routines** and **Habits**: add a morning or bedtime routine (one step per
+   line) and any daily habits.
+4. **Settings → Kid mode:** set a 4-digit parent PIN. To give a child their
+   own PIN, edit them under Family members.
+5. On the shared tablet: **Kid mode** (sidebar, or More on phones). Kids tap
+   their picture. Leaving Kid mode asks for the parent PIN.
+
+How points work: when a parent checks off a chore, points are given right
+away. When a kid checks it off in Kid mode, it waits under **Waiting for your
+OK** (on the Rewards page and the Chores tab) until a parent approves it.
+Reward requests work the same way; approving one takes the points away.
+
+Kid mode is a convenience lock for a family device, not a security feature:
+the device stays signed in with a parent's account.
+
 ## Updating later
 Upload the changed files to GitHub the same way. Your data lives in
 Supabase, so updating the app never touches it. If a new version includes a
@@ -132,8 +172,10 @@ js/main.js          startup, clicks, forms, timers
 js/data.js          loading, saving, live sync
 js/session.js       sign-in / sign-out handling
 js/nav.js           list of sections (and which are coming soon)
-js/modules/         one file per section: home, calendar, tasks, grocery,
-                    countdowns, birthdays, weather, settings, auth, shell
+js/modules/         one file per section: home, calendar, tasks, chores,
+                    rewards, routines, habits, kidmode, grocery, countdowns,
+                    birthdays, weather, settings, auth, shell
+                    (kids.js holds what chores/rewards/routines/habits share)
 database/setup.sql  tables, security rules, live sync
 supabase/functions/calendar-feed/index.ts
                     server function that reads the iCal addresses

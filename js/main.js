@@ -13,9 +13,15 @@ import * as grocery from './modules/grocery.js';
 import * as settings from './modules/settings.js';
 import * as weather from './modules/weather.js';
 import * as calendar from './modules/calendar.js';
+import * as chores from './modules/chores.js';
+import * as rewards from './modules/rewards.js';
+import * as routines from './modules/routines.js';
+import * as habits from './modules/habits.js';
+import * as kidmode from './modules/kidmode.js';
 
 // Each module contributes its own buttons (actions), forms, and checkboxes (toggles).
-const modules = [auth, shell, countdowns, tasks, grocery, settings, weather, calendar];
+const modules = [auth, shell, countdowns, tasks, grocery, settings, weather, calendar,
+  chores, rewards, routines, habits, kidmode];
 const actions = {
   'close-modal': () => closeModal(),
   'close-modal-backdrop': () => closeModal(),
@@ -51,6 +57,7 @@ function render() {
   else if (state.loading) html = '<div class="boot">Loading Family Hub…</div>';
   else if (!state.user) html = auth.authView();
   else if (!state.me || !state.family) html = auth.onboardingView();
+  else if (kidmode.active()) html = kidmode.view();
   else html = shell.shellView();
   app.innerHTML = html;
 
@@ -105,7 +112,7 @@ document.addEventListener('submit', async e => {
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (modalIsOpen()) closeModal();
-  else if (state.tv) actions['tv-toggle']();
+  else if (state.tv && !kidmode.active()) actions['tv-toggle']();
 });
 
 // ---------- Navigation (#/tasks, #/grocery, …) ----------
@@ -157,6 +164,7 @@ async function boot() {
   setRenderer(render);
   state.view = viewFromHash();
   try { state.tv = localStorage.getItem('familyHub.tv') === '1'; } catch { /* private mode */ }
+  kidmode.restore();
 
   if (!configured) {
     update({ loading: false });
