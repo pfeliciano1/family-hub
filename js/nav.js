@@ -2,7 +2,7 @@
 // until their module is built; they plug in without changing anything else.
 export const NAV = [
   { id: 'home',       icon: '🏠', label: 'Home' },
-  { id: 'calendar',   icon: '📅', label: 'Calendar', soon: 'Alpha 0.5' },
+  { id: 'calendar',   icon: '📅', label: 'Calendar' },
   { id: 'tasks',      icon: '✅', label: 'Tasks & Chores', short: 'Tasks' },
   { id: 'rewards',    icon: '⭐', label: 'Rewards', soon: 'Alpha 0.6' },
   { id: 'meals',      icon: '🍽️', label: 'Meals', soon: 'Alpha 0.7' },

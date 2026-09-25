@@ -3,9 +3,11 @@ import { state, update } from './state.js';
 import { toast, friendlyError } from './utils.js';
 import { loadMembership, loadAll, subscribe, unsubscribe } from './data.js';
 import { loadWeather } from './modules/weather.js';
+import { loadEvents } from './modules/calendar.js';
 
 const EMPTY = {
   me: null, family: null, members: [], countdowns: [], tasks: [], grocery: [],
+  calendars: [], calendarsMissing: false, events: null,
   weather: null, locResults: [], live: false,
 };
 
@@ -30,6 +32,7 @@ export async function handleSession(session, force = false) {
     await loadAll();
     subscribe();
     loadWeather();
+    loadEvents();
   } catch (e) {
     console.error(e);
     toast(friendlyError(e), 'error');

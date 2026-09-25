@@ -12,9 +12,10 @@ import * as tasks from './modules/tasks.js';
 import * as grocery from './modules/grocery.js';
 import * as settings from './modules/settings.js';
 import * as weather from './modules/weather.js';
+import * as calendar from './modules/calendar.js';
 
 // Each module contributes its own buttons (actions), forms, and checkboxes (toggles).
-const modules = [auth, shell, countdowns, tasks, grocery, settings, weather];
+const modules = [auth, shell, countdowns, tasks, grocery, settings, weather, calendar];
 const actions = {
   'close-modal': () => closeModal(),
   'close-modal-backdrop': () => closeModal(),
@@ -117,6 +118,7 @@ function viewFromHash() {
 window.addEventListener('hashchange', () => {
   update({ view: viewFromHash() });
   window.scrollTo(0, 0);
+  calendar.loadEvents();
 });
 
 // ---------- Timers ----------
@@ -129,6 +131,7 @@ setInterval(() => {
     renderedDay = today;
     update();
     weather.loadWeather(true);
+    calendar.loadEvents(true);
     return;
   }
   const clock = document.getElementById('clock-time');
@@ -137,12 +140,14 @@ setInterval(() => {
 
 setInterval(() => weather.loadWeather(), 10 * 60 * 1000);   // weather caches for 30 min
 setInterval(() => refreshAll(), 5 * 60 * 1000);              // safety net if live sync drops
+setInterval(() => calendar.loadEvents(), 5 * 60 * 1000);     // events cache for 15 min
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible' || !state.me) return;
   // Phones pause pages in the background, so catch up when reopened
   refreshAll();
   weather.loadWeather();
+  calendar.loadEvents();
   shell.requestWakeLock();
 });
 

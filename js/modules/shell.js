@@ -9,6 +9,7 @@ import * as grocery from './grocery.js';
 import * as settings from './settings.js';
 import * as weather from './weather.js';
 import * as birthdays from './birthdays.js';
+import * as calendar from './calendar.js';
 
 // Sections that are built. Everything else in NAV shows a roadmap page.
 const VIEWS = {
@@ -19,9 +20,10 @@ const VIEWS = {
   settings: settings.view,
   weather: weather.view,
   birthdays: birthdays.view,
+  calendar: calendar.view,
 };
 
-const MOBILE_TABS = ['home', 'tasks', 'grocery', 'countdowns'];
+const MOBILE_TABS = ['home', 'calendar', 'tasks', 'grocery'];
 
 function placeholder(n) {
   return `<div class="page-title"><h2>${n.icon} ${esc(n.label)}</h2></div>
@@ -65,7 +67,7 @@ export function shellView() {
       ${renderView()}
       <footer class="footer">
         <span>${state.live ? '<span class="live">● Live sync on</span>' : '<span class="offline">○ Connecting…</span>'}</span>
-        <span>Family Hub • Alpha 0.4${state.tv ? ' • TV Display' : ''}</span>
+        <span>Family Hub • Alpha 0.5${state.tv ? ' • TV Display' : ''}</span>
       </footer>
     </main>
 

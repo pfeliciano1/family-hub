@@ -1,6 +1,7 @@
 // Weather + "what to wear" using Open-Meteo (free, no account or key).
 import { state, update } from '../state.js';
-import { esc, cardHead, fmtDate, parseDate } from '../utils.js';
+import { esc, cardHead, fmtDate, parseDate, toISODate } from '../utils.js';
+import { upcomingTimedEvents, setTipProvider, fmtTime } from './calendar.js';
 
 const CODES = {
   0: ['☀️', 'Clear'], 1: ['🌤️', 'Mostly sunny'], 2: ['⛅', 'Partly cloudy'], 3: ['☁️', 'Cloudy'],
@@ -34,6 +35,7 @@ export async function loadWeather(force = false) {
     longitude: f.longitude,
     current: 'temperature_2m,apparent_temperature,weather_code,wind_speed_10m',
     daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max',
+    hourly: 'temperature_2m,precipitation_probability,weather_code',
     temperature_unit: imperial ? 'fahrenheit' : 'celsius',
     wind_speed_unit: imperial ? 'mph' : 'kmh',
     timezone: 'auto',
@@ -52,9 +54,18 @@ export async function loadWeather(force = false) {
       pop: d.precipitation_probability_max?.[i] ?? 0,
       uv: d.uv_index_max?.[i] ?? 0,
     }));
+    // Hour-by-hour forecast, keyed by local time like "2026-09-25T17:00"
+    const hours = {};
+    (j.hourly?.time || []).forEach((t, i) => {
+      hours[t] = {
+        temp: j.hourly.temperature_2m[i],
+        pop: j.hourly.precipitation_probability?.[i] ?? 0,
+        code: j.hourly.weather_code[i],
+      };
+    });
     update({
       weather: {
-        key, imperial, fetchedAt: Date.now(),
+        key, imperial, fetchedAt: Date.now(), hours,
         temp: j.current.temperature_2m,
         feels: j.current.apparent_temperature,
         code: j.current.weather_code,
@@ -99,6 +110,66 @@ export function clothingFor(w) {
 
 const unit = w => (w.imperial ? 'F' : 'C');
 
+// ---------- Activity-aware tips ("soccer at 5:30, rain likely") ----------
+
+const hourKey = d => `${toISODate(d)}T${String(d.getHours()).padStart(2, '0')}:00`;
+
+// Weather advice for one calendar event, or null if nothing to worry about.
+export function eventTip(e) {
+  const w = state.weather;
+  if (!w || w.error || !w.hours || e.allDay) return null;
+  const slots = [];
+  const t = new Date(e.start);
+  t.setMinutes(0, 0, 0);
+  while (slots.length < 4 && (t < e.end || !slots.length)) {
+    const h = w.hours[hourKey(t)];
+    if (h) slots.push(h);
+    t.setHours(t.getHours() + 1);
+  }
+  if (!slots.length) return null;
+
+  const toF = v => (w.imperial ? v : v * 9 / 5 + 32);
+  const pop = Math.max(...slots.map(s => s.pop));
+  const codes = slots.map(s => s.code);
+  const temps = slots.map(s => s.temp);
+  const low = Math.min(...temps);
+  const high = Math.max(...temps);
+
+  let icon = null;
+  let advice = null;
+  if (codes.some(c => c >= 95)) { icon = '⛈️'; advice = 'thunderstorms possible, check before heading out'; }
+  else if (codes.some(isSnow)) { icon = '❄️'; advice = 'snow expected, wear boots and warm layers'; }
+  else if (pop >= 50 || codes.some(isRain)) { icon = '☔'; advice = `rain likely${pop ? ` (${pop}%)` : ''}, pack a rain jacket or umbrella`; }
+  else if (pop >= 30) { icon = '☂️'; advice = `${pop}% chance of rain, maybe bring an umbrella`; }
+
+  let temp = null;
+  if (toF(low) < 45) temp = `only ${Math.round(low)}° then, bring a warm jacket`;
+  else if (toF(high) >= 88) temp = `${Math.round(high)}° then, bring water`;
+  if (!advice && !temp) return null;
+  if (!advice) icon = toF(low) < 45 ? '🧥' : '💧';
+
+  const today = sameDate(e.start, new Date());
+  const when = `${fmtTime(e.start)}${today ? '' : ' tomorrow'}`;
+  const text = [advice, temp].filter(Boolean).join('; ');
+  return { icon, text: `${text[0].toUpperCase()}${text.slice(1)}.`, line: `${e.title} at ${when}: ${text}` };
+}
+
+const sameDate = (a, b) => toISODate(a) === toISODate(b);
+
+setTipProvider(eventTip);
+
+// Tips for the family's timed events over the next day.
+export function activityTips(limit = 3) {
+  return upcomingTimedEvents(24).map(e => ({ e, tip: eventTip(e) })).filter(x => x.tip).slice(0, limit);
+}
+
+function tipsBlock(limit) {
+  const tips = activityTips(limit);
+  if (!tips.length) return '';
+  return `<div class="plan-ahead"><b>📅 For your plans</b>
+    <ul>${tips.map(({ tip }) => `<li>${tip.icon} ${esc(tip.line)}</li>`).join('')}</ul></div>`;
+}
+
 // ---------- Dashboard pieces ----------
 
 export function heroWeather() {
@@ -132,7 +203,8 @@ export function weatherCard() {
     body = `<div class="wx-mini"><span class="hw-icon">${icon}</span>
         <div><b class="temp">${Math.round(w.temp)}°${unit(w)}</b>
         <div class="muted">${text} • High ${Math.round(t.hi)}° • Low ${Math.round(t.lo)}°${t.pop ? ` • ${t.pop}% rain` : ''}</div></div></div>
-      <ul class="wear-list">${clothingFor(w).map(x => `<li>${x}</li>`).join('')}</ul>`;
+      <ul class="wear-list">${clothingFor(w).map(x => `<li>${x}</li>`).join('')}</ul>
+      ${tipsBlock(3)}`;
   }
   return `<div class="card">${cardHead('🌤️', 'Weather & What to Wear', 'weather', 'Details')}${body}</div>`;
 }
@@ -180,7 +252,19 @@ export function view() {
           <div class="muted">${dt}${day.pop >= 30 ? ` • ${day.pop}%` : ''}</div></div>`;
       }).join('')}</div>
     </section>
-    <p class="muted small">Activity-aware suggestions (like "soccer at 5:30 and rain is expected") arrive once the calendar is connected.</p>`;
+    ${planPanel()}`;
+}
+
+function planPanel() {
+  if (!state.calendars.length) {
+    return `<p class="muted small">Connect your calendars in <a href="#/settings">Settings</a> to get weather tips for your plans, like "Soccer at 5:30: rain likely, pack a rain jacket."</p>`;
+  }
+  const tips = activityTips(10);
+  return `<section class="panel"><h3>📅 Weather for your plans</h3>
+    ${tips.length
+      ? `<ul class="wear-list">${tips.map(({ tip }) => `<li>${tip.icon} ${esc(tip.line)}</li>`).join('')}</ul>`
+      : '<p class="muted">No weather worries for anything on the calendar in the next 24 hours.</p>'}
+  </section>`;
 }
 
 export const actions = {

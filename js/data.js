@@ -3,6 +3,7 @@ import { sb } from './supabase.js';
 import { state, update } from './state.js';
 import { toast, friendlyError } from './utils.js';
 import { loadWeather } from './modules/weather.js';
+import { loadEvents } from './modules/calendar.js';
 
 // state key → [table, how to sort]
 const SOURCES = {
@@ -10,10 +11,11 @@ const SOURCES = {
   countdowns: ['countdowns',     q => q.order('event_date')],
   tasks:      ['tasks',          q => q.order('created_at')],
   grocery:    ['grocery_items',  q => q.order('created_at')],
+  calendars:  ['calendars',      q => q.order('created_at')],
 };
 const TABLE_TO_KEY = {
   families: 'family', family_members: 'members', countdowns: 'countdowns',
-  tasks: 'tasks', grocery_items: 'grocery',
+  tasks: 'tasks', grocery_items: 'grocery', calendars: 'calendars',
 };
 
 export async function loadMembership(userId) {
@@ -31,12 +33,21 @@ async function fetchKey(key) {
   }
   const [table, sort] = SOURCES[key];
   const { data, error } = await sort(sb.from(table).select('*').eq('family_id', fid));
-  if (error) throw error;
+  if (error) {
+    // Calendars arrived in 0.5. Until the 0.5 database script is run,
+    // keep everything else working and let the calendar explain what to do.
+    if (key === 'calendars') {
+      state.calendarsMissing = true;
+      return [];
+    }
+    throw error;
+  }
+  if (key === 'calendars') state.calendarsMissing = false;
   return data;
 }
 
 export async function loadAll() {
-  const keys = ['family', 'members', 'countdowns', 'tasks', 'grocery'];
+  const keys = ['family', 'members', 'countdowns', 'tasks', 'grocery', 'calendars'];
   const results = await Promise.all(keys.map(fetchKey));
   const patch = {};
   keys.forEach((k, i) => { patch[k] = results[i]; });
@@ -57,6 +68,7 @@ export async function refresh(key) {
     }
     update({ [key]: data });
     if (key === 'family') loadWeather();
+    if (key === 'calendars') loadEvents(true);
   } catch (e) {
     console.error(e);
   }
@@ -94,6 +106,7 @@ export function subscribe() {
   channel = sb.channel(`family-hub-${state.me.family_id}`);
   // The database security rules decide which changes this device receives.
   for (const table of Object.keys(TABLE_TO_KEY)) {
+    if (table === 'calendars' && state.calendarsMissing) continue; // 0.5 script not run yet
     channel.on('postgres_changes', { event: '*', schema: 'public', table },
       () => scheduleRefresh(TABLE_TO_KEY[table]));
   }

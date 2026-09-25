@@ -21,7 +21,7 @@ The prototype established the approved look: navy sidebar, blue accents, card da
 ---
 
 ## Alpha 0.4 — Real Foundation
-**Status:** Current
+**Status:** Completed. Deployed to GitHub Pages and Supabase on 2026-09-25; Paul confirmed sign-up, family setup, settings, and TV Display work.
 
 The prototype's look was kept; the code underneath was rebuilt so every working card reads real, shared family data.
 
@@ -47,7 +47,7 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - **Code structure:** plain JavaScript modules, no build step, so files can be uploaded straight to GitHub. One module per section; each registers its own buttons, forms, and checkboxes.
 - **Weather:** Open-Meteo instead of a keyed API, to keep $0 and avoid storing an API key.
 - **Kid access (planned):** profile + PIN on shared devices instead of email logins, arriving with Rewards.
-- **Google Calendar (planned for 0.5):** start by reading each calendar's private "secret address in iCal format" through a small server function, which avoids Google's OAuth setup and its 7-day token expiry for unverified apps. Events are still created in the Google Calendar app. Two-way sync can come later if needed.
+- **Google Calendar (built in 0.5):** start by reading each calendar's private "secret address in iCal format" through a small server function, which avoids Google's OAuth setup and its 7-day token expiry for unverified apps. Events are still created in the Google Calendar app. Two-way sync can come later if needed.
 
 ### Testing
 - Database script run twice against Postgres with Supabase's auth pieces simulated. Verified family isolation, invite-code linking, blocked login hijacking, blocked self-removal, and no access when signed out.
@@ -55,13 +55,34 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 
 ---
 
-## Next Development Priorities
+## Alpha 0.5 — Calendar
+**Status:** Current (built 2026-09-25; needs the database update and server function deployed)
 
-### Alpha 0.5 — Calendar
-1. Google Calendar via private iCal addresses (server function to fetch and combine)
-2. Today's Calendar card, day/week/month views, color by family member
-3. Activity-aware weather tips ("soccer at 5:30, rain likely — pack a jacket")
-4. + Event in Quick Add (opens Google Calendar prefilled)
+### Built
+- **Calendars in Settings:** connect any number of Google calendars by their "Secret address in iCal format", each assigned to a family member (their color) or the whole family. Catches the common mistakes (web link or public address instead of the secret one).
+- **calendar-feed server function** (Supabase Edge Function): reads every family calendar, expands repeating events, applies moved and cancelled instances, handles time zones, and returns one combined list for a date range. Uses the Mozilla ical.js library.
+- **Today's Calendar card** on Home, with the next upcoming event when today is empty.
+- **Calendar page:** Day, Week, and Month views with previous/next/today, colored by family member. Events on two people's calendars (invites) show once. Tap an event for details and a map link.
+- **Weather for your plans:** hourly forecast is matched to each timed event in the next 24 hours. Rain, snow, storms, cold, and heat produce a tip on the weather card, the Weather page, the event itself, and a ☔-style marker on the calendar.
+- **+ Event** (Quick Add and Calendar page): opens Google Calendar with the title, date, times, and place filled in.
+- Phone: Calendar replaces Countdowns in the bottom bar (Countdowns stays under More). The month view shows colored dots instead of titles.
+
+### Decisions
+- Events are read-only in Family Hub; Google Calendar stays the place to create and edit them. No Google sign-in or OAuth needed.
+- The server function reads calendars with the signed-in person's own login, so the database security rules keep each family to its own calendars. No secret keys are stored in the function.
+- Secret iCal addresses are stored in the `calendars` table, readable only by the family's logins.
+- If the 0.5 database update hasn't been run, the rest of the app keeps working and the calendar explains what to do.
+- Events refresh every 15 minutes, on reopen, on a new day, and about 90 seconds after + Event.
+
+### Testing
+- Database script run against Postgres on top of an existing 0.4 database, then run again: 0.4 data kept, calendars isolated between families, cross-family inserts blocked, signed-out access denied, non-https addresses rejected.
+- Server function's calendar reader tested with a Google-style feed: weekly repeats across daylight saving, a skipped date, a moved instance, multi-day all-day events, cancelled events, and a daily repeat running since 2010.
+- Every calendar screen exercised in a headless browser at desktop, phone, and TV sizes, including no calendars, no database update, function not deployed, and one bad calendar. No errors.
+- Not yet tested against Paul's live Supabase project and real Google calendars.
+
+---
+
+## Next Development Priorities
 
 ### Alpha 0.6 — Kids
 5. Recurring chores with points
@@ -113,11 +134,11 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 | UI-001 | Visual | Fixed (0.3) | Large blue decorative shape behind weather card |
 | UI-002 | Visual | Planned (0.6) | Routines & Habits card with per-routine lists and 4/5 progress |
 | FEAT-001 | Feature | Done (0.4) | Cloud synchronization |
-| FEAT-002 | Feature | Planned (0.5) | Google Calendar integration |
+| FEAT-002 | Feature | Done (0.5) | Google Calendar integration (read-only, via secret iCal addresses) |
 | FEAT-003 | Feature | Done (0.4) | Authentication and family roles (kid PIN profiles in 0.6) |
 | FEAT-004 | Feature | Partial (0.4) | Tasks done; chores and rewards in 0.6 |
 | FEAT-005 | Feature | Partial (0.4) | Grocery list done; meals and recipes in 0.7 |
-| FEAT-006 | Feature | Done (0.4) | Weather and clothing engine (activity-aware tips in 0.5) |
+| FEAT-006 | Feature | Done (0.5) | Weather and clothing engine, with activity-aware tips |
 | FEAT-007 | Feature | Partial (0.4) | TV mode wake lock, full screen, large text; auto-rotation later |
 | FEAT-008 | Feature | Planned | Family Assistant / natural-language Quick Add |
 | FEAT-009 | Feature | Done (0.4) | Countdowns with yearly repeats |
@@ -131,3 +152,4 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - **0.2** — TV mode exit control and Escape-key support
 - **0.3** — Removed distracting weather-area decoration and added development documentation
 - **0.4** — Real foundation: accounts, shared database, live sync, tasks, groceries, countdowns, birthdays, live weather with clothing suggestions
+- **0.5** — Calendar: Google calendars combined by family member, Today card, day/week/month views, weather tips for events, + Event

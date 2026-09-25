@@ -1,10 +1,11 @@
 -- =====================================================================
--- Family Hub — Alpha 0.4 database setup
+-- Family Hub — Alpha 0.5 database setup
 --
 -- How to run: Supabase dashboard → SQL Editor → New query →
 -- paste this whole file → Run.
 --
 -- Safe to run more than once: it skips anything that already exists.
+-- Upgrading from 0.4? Just run this whole file again; your data stays.
 -- If Supabase warns that the query contains "drop" statements, that's
 -- expected — it only drops and re-creates the security rules below.
 -- =====================================================================
@@ -117,6 +118,22 @@ create table if not exists public.grocery_items (
 );
 create index if not exists grocery_items_family_idx on public.grocery_items (family_id);
 
+-- Calendars (Alpha 0.5): each one is a private iCal address, usually a
+-- Google Calendar "Secret address in iCal format". member_id says whose
+-- calendar it is (its color comes from them); empty means the whole family.
+create table if not exists public.calendars (
+  id         uuid primary key default gen_random_uuid(),
+  family_id  uuid not null default public.my_family_id()
+             references public.families(id) on delete cascade,
+  name       text not null check (length(trim(name)) > 0),
+  ical_url   text not null check (ical_url ~* '^(https|webcal)://'),
+  member_id  uuid references public.family_members(id) on delete set null,
+  color      text not null default '#1976d2' check (color ~ '^#[0-9A-Fa-f]{6}$'),
+  created_by uuid default auth.uid(),
+  created_at timestamptz not null default now()
+);
+create index if not exists calendars_family_idx on public.calendars (family_id);
+
 
 -- ---------------------------------------------------------------------
 -- 4. Onboarding: create a family, or join one with an invite code
@@ -206,6 +223,7 @@ alter table public.family_members enable row level security;
 alter table public.countdowns     enable row level security;
 alter table public.tasks          enable row level security;
 alter table public.grocery_items  enable row level security;
+alter table public.calendars      enable row level security;
 
 -- families
 drop policy if exists "Members can view their family" on public.families;
@@ -245,7 +263,7 @@ create policy "Parents can remove other members" on public.family_members
     and user_id is distinct from auth.uid()
   );
 
--- countdowns, tasks, grocery_items: anyone in the family can manage them
+-- countdowns, tasks, grocery_items, calendars: anyone in the family can manage them
 drop policy if exists "Family can manage countdowns" on public.countdowns;
 create policy "Family can manage countdowns" on public.countdowns
   for all to authenticated
@@ -264,6 +282,12 @@ create policy "Family can manage grocery items" on public.grocery_items
   using (family_id = public.my_family_id())
   with check (family_id = public.my_family_id());
 
+drop policy if exists "Family can manage calendars" on public.calendars;
+create policy "Family can manage calendars" on public.calendars
+  for all to authenticated
+  using (family_id = public.my_family_id())
+  with check (family_id = public.my_family_id());
+
 
 -- ---------------------------------------------------------------------
 -- 6. Access grants
@@ -274,7 +298,7 @@ create policy "Family can manage grocery items" on public.grocery_items
 grant usage on schema public to authenticated;
 
 revoke all on public.families, public.family_members, public.countdowns,
-              public.tasks, public.grocery_items from anon;
+              public.tasks, public.grocery_items, public.calendars from anon;
 
 grant select on public.families to authenticated;
 grant update (name, location_name, latitude, longitude, temp_unit)
@@ -289,7 +313,7 @@ grant update (display_name, role, color, birthday, sort_order)
   on public.family_members to authenticated;
 
 grant select, insert, update, delete
-  on public.countdowns, public.tasks, public.grocery_items to authenticated;
+  on public.countdowns, public.tasks, public.grocery_items, public.calendars to authenticated;
 
 revoke all on function public.my_family_id()              from public, anon;
 revoke all on function public.i_am_parent()               from public, anon;
@@ -309,7 +333,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['families', 'family_members', 'countdowns', 'tasks', 'grocery_items'] loop
+  foreach t in array array['families', 'family_members', 'countdowns', 'tasks', 'grocery_items', 'calendars'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

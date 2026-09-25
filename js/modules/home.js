@@ -8,6 +8,7 @@ import { dashboardTasks, taskRow } from './tasks.js';
 import { groceryRow } from './grocery.js';
 import { heroWeather, weatherCard } from './weather.js';
 import { upcomingSpecialDays, specialRow } from './birthdays.js';
+import { todayCard } from './calendar.js';
 
 function countdownsCard() {
   const list = upcomingCountdowns().filter(c => c.show_on_dashboard).slice(0, 4);
@@ -63,7 +64,7 @@ function quickAddCard() {
       <button data-action="grocery-new">＋ Grocery</button>
       <button data-action="countdown-new">＋ Countdown</button>
       <button data-action="member-new">＋ Family member</button>
-      <button disabled title="Arrives with the calendar in Alpha 0.5">＋ Event</button>
+      <button data-action="event-new">＋ Event</button>
       <button disabled title="Arrives with meal planning in Alpha 0.7">＋ Meal</button>
     </div></div>`;
 }
@@ -77,7 +78,7 @@ export function view() {
       ${heroWeather()}
     </section>
     <div class="grid">
-      ${soonCard('📅', 'Today\'s Calendar', 'Alpha 0.5', 'Your Google calendars will show up here, combined into one family schedule.')}
+      ${todayCard()}
       ${countdownsCard()}
       ${membersCard()}
       ${tasksCard()}

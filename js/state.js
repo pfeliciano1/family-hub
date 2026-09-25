@@ -8,6 +8,11 @@ export const state = {
   countdowns: [],
   tasks: [],
   grocery: [],
+  calendars: [],
+  calendarsMissing: false,  // true until the 0.5 database script is run
+  events: null,        // calendar events: { from, to, list, errors, fetchedAt } or { error }
+  calView: 'week',     // day | week | month
+  calDate: null,       // the day the calendar page is looking at (YYYY-MM-DD)
   weather: null,
   live: false,         // true while live sync is connected
   view: 'home',

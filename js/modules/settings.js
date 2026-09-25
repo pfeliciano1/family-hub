@@ -5,6 +5,7 @@ import {
   esc, avatar, fmtDate, parseDate, openModal, closeModal, toast,
 } from '../utils.js';
 import { run, refresh } from '../data.js';
+import { settingsPanel as calendarsPanel } from './calendar.js';
 
 const PALETTE = ['#1976d2', '#8e24aa', '#2e7d32', '#ef6c00', '#c62828', '#00838f', '#6d4c41', '#3949ab'];
 
@@ -61,6 +62,8 @@ export function view() {
       ${state.members.map(memberRow).join('')}
       <p class="muted small">Kids don't need their own email or login. Add them here; kid-friendly profiles with a PIN come with the Rewards system.</p>
     </section>
+
+    ${calendarsPanel()}
 
     <section class="panel">
       <h3>🔑 Invite another adult</h3>
