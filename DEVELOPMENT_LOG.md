@@ -108,6 +108,13 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 
 ---
 
+## Alpha 0.6.1 — Fixes (2026-09-26)
+- **BUG-002 fixed:** the Calendar page froze when showing a week or day with a timed event more than about 5 days away, so Day/Week/Month and the arrows seemed to do nothing. The weather-tip check looped forever looking for a forecast hour that didn't exist. Tips are now limited to events in the next 48 hours and the check is bounded. Reproduced in a headless browser before the fix and confirmed after.
+- **iPhone/iPad install:** Apple doesn't offer to install web apps automatically the way Android does. Home now shows a one-time tip on iPhone/iPad (Safari → Share → Add to Home Screen), hidden once dismissed or when opened from the home screen.
+- Files changed: js/modules/weather.js, js/modules/home.js, js/main.js, js/modules/shell.js, styles.css. No database changes.
+
+---
+
 ## Next Development Priorities
 
 ### Alpha 0.7 — Food
@@ -162,6 +169,8 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 | FEAT-008 | Feature | Planned | Family Assistant / natural-language Quick Add |
 | FEAT-009 | Feature | Done (0.4) | Countdowns with yearly repeats |
 | FEAT-010 | Feature | Done (0.4) | Birthdays & anniversaries |
+| BUG-002 | Bug | Fixed (0.6.1) | Calendar froze when a shown week had an event beyond the weather forecast |
+| UI-003 | Visual | Done (0.6.1) | Add-to-Home-Screen tip for iPhone and iPad |
 
 ---
 
@@ -173,3 +182,4 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - **0.4** — Real foundation: accounts, shared database, live sync, tasks, groceries, countdowns, birthdays, live weather with clothing suggestions
 - **0.5** — Calendar: Google calendars combined by family member, Today card, day/week/month views, weather tips for events, + Event
 - **0.6** — Kids: chores with points and approvals, rewards and goals, routines, habits with streaks, Kid mode with PINs
+- **0.6.1** — Calendar freeze fix; iPhone/iPad home screen tip

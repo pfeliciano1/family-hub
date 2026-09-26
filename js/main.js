@@ -18,10 +18,11 @@ import * as rewards from './modules/rewards.js';
 import * as routines from './modules/routines.js';
 import * as habits from './modules/habits.js';
 import * as kidmode from './modules/kidmode.js';
+import * as home from './modules/home.js';
 
 // Each module contributes its own buttons (actions), forms, and checkboxes (toggles).
 const modules = [auth, shell, countdowns, tasks, grocery, settings, weather, calendar,
-  chores, rewards, routines, habits, kidmode];
+  chores, rewards, routines, habits, kidmode, home];
 const actions = {
   'close-modal': () => closeModal(),
   'close-modal-backdrop': () => closeModal(),

@@ -1,4 +1,4 @@
-/* Family Hub — Alpha 0.6 */
+/* Family Hub — Alpha 0.6.1 */
 
 :root {
   --navy: #0b2447;
@@ -435,6 +435,9 @@ h3.who { display: flex; align-items: center; gap: 9px; }
 .kid-face:hover { border-color: var(--c); }
 .kid-face small { color: var(--muted); font-size: 12px; }
 .avatar.xl { width: 88px; height: 88px; font-size: 32px; }
+
+.install-hint { display: flex; flex-direction: column; gap: 4px; margin: 0 0 12px; }
+.install-hint .link { align-self: flex-start; }
 
 /* ---------- Dialogs & messages ---------- */
 .modal-backdrop {

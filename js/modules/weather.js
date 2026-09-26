@@ -118,10 +118,15 @@ const hourKey = d => `${toISODate(d)}T${String(d.getHours()).padStart(2, '0')}:0
 export function eventTip(e) {
   const w = state.weather;
   if (!w || w.error || !w.hours || e.allDay) return null;
+  // Only upcoming events in the next two days; past events have no
+  // forecast, and later ones aren't reliable enough to advise on.
+  const now = Date.now();
+  if (e.end <= now || e.start - now > 48 * 3600e3) return null;
   const slots = [];
   const t = new Date(e.start);
   t.setMinutes(0, 0, 0);
-  while (slots.length < 4 && (t < e.end || !slots.length)) {
+  for (let i = 0; i < 4; i++) { // the event's first four hours at most
+    if (i > 0 && t >= e.end) break;
     const h = w.hours[hourKey(t)];
     if (h) slots.push(h);
     t.setHours(t.getHours() + 1);

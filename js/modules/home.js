@@ -1,5 +1,5 @@
 // The Home dashboard: what's happening, what needs doing, what's coming up.
-import { state } from '../state.js';
+import { state, update } from '../state.js';
 import {
   esc, avatar, greeting, todayLong, timeNow, fmtDate, daysLabel, cardHead, soonCard, emptyMini,
 } from '../utils.js';
@@ -71,8 +71,30 @@ function quickAddCard() {
     </div></div>`;
 }
 
+// iPhones and iPads don't offer to install web apps on their own, so show
+// how once (until dismissed). Hidden when already opened from the home screen.
+function installHint() {
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS reports as a Mac
+  const installed = navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+  let dismissed = false;
+  try { dismissed = localStorage.getItem('familyHub.installHint') === 'no'; } catch { /* private mode */ }
+  if (!ios || installed || dismissed || state.tv) return '';
+  return `<div class="notice install-hint">
+    <b>📲 Add Family Hub to your home screen</b>
+    <span>In Safari, tap the Share button <span aria-hidden="true">(□↑)</span>, scroll down, and tap <b>Add to Home Screen</b>, then <b>Add</b>.</span>
+    <button class="link" data-action="install-hint-hide">Got it</button></div>`;
+}
+
+export const actions = {
+  'install-hint-hide': () => {
+    try { localStorage.setItem('familyHub.installHint', 'no'); } catch { /* private mode */ }
+    update();
+  },
+};
+
 export function view() {
-  return `<section class="hero">
+  return `${installHint()}<section class="hero">
       <div class="hero-text">
         <h2>${greeting()}, ${esc(state.family.name)}!</h2>
         <p>${todayLong()} • <span id="clock-time">${timeNow()}</span></p>
