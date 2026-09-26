@@ -23,7 +23,13 @@ const SOURCES = {
   checks:      ['routine_checks',    q => q.gte('for_date', daysAgo(7))],
   habits:      ['habits',            q => q.order('created_at')],
   habitLogs:   ['habit_logs',        q => q.gte('for_date', daysAgo(200)).order('for_date', { ascending: false })],
+  // Food (0.7)
+  recipes:     ['recipes',           q => q.order('title')],
+  meals:       ['meal_plan',         q => q.gte('plan_date', daysAgo(180)).order('plan_date')],
+  lists:       ['lists',             q => q.order('created_at')],
+  listItems:   ['list_items',        q => q.order('sort_order').order('created_at')],
 };
+const FOOD_KEYS = new Set(['recipes', 'meals', 'lists', 'listItems']);
 const KIDS_KEYS = new Set(['rewards', 'chores', 'completions', 'claims', 'points', 'balances',
   'routines', 'steps', 'checks', 'habits', 'habitLogs']);
 
@@ -38,7 +44,9 @@ const TABLE_TO_KEY = {
   rewards: 'rewards', chores: 'chores', chore_completions: 'completions', reward_claims: 'claims',
   point_entries: ['points', 'balances'], routines: 'routines', routine_steps: 'steps',
   routine_checks: 'checks', habits: 'habits', habit_logs: 'habitLogs',
+  recipes: 'recipes', meal_plan: 'meals', lists: 'lists', list_items: 'listItems',
 };
+const FOOD_TABLES = new Set(['recipes', 'meal_plan', 'lists', 'list_items']);
 const KIDS_TABLES = new Set(['rewards', 'chores', 'chore_completions', 'reward_claims', 'point_entries',
   'routines', 'routine_steps', 'routine_checks', 'habits', 'habit_logs']);
 
@@ -72,8 +80,10 @@ async function fetchKey(key) {
       return [];
     }
     if (KIDS_KEYS.has(key)) return kidsMissing(); // same for the 0.6 kids tables
+    if (FOOD_KEYS.has(key)) { state.foodMissing = true; return []; } // and the 0.7 food tables
     throw error;
   }
+  if (FOOD_KEYS.has(key)) state.foodMissing = false;
   if (key === 'calendars') state.calendarsMissing = false;
   if (KIDS_KEYS.has(key)) state.kidsMissing = false;
   return data;
@@ -86,7 +96,7 @@ function kidsMissing() {
 
 export async function loadAll() {
   const keys = ['family', 'members', 'countdowns', 'tasks', 'grocery', 'calendars',
-    ...[...KIDS_KEYS]];
+    ...[...KIDS_KEYS], ...[...FOOD_KEYS]];
   const results = await Promise.all(keys.map(fetchKey));
   const patch = {};
   keys.forEach((k, i) => { patch[k] = results[i]; });
@@ -149,6 +159,7 @@ export function subscribe() {
   for (const table of Object.keys(TABLE_TO_KEY)) {
     if (table === 'calendars' && state.calendarsMissing) continue; // 0.5 script not run yet
     if (KIDS_TABLES.has(table) && state.kidsMissing) continue;    // 0.6 script not run yet
+    if (FOOD_TABLES.has(table) && state.foodMissing) continue;    // 0.7 script not run yet
     channel.on('postgres_changes', { event: '*', schema: 'public', table },
       () => scheduleRefresh(TABLE_TO_KEY[table]));
   }

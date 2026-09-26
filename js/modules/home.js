@@ -1,7 +1,7 @@
 // The Home dashboard: what's happening, what needs doing, what's coming up.
 import { state, update } from '../state.js';
 import {
-  esc, avatar, greeting, todayLong, timeNow, fmtDate, daysLabel, cardHead, soonCard, emptyMini,
+  esc, avatar, greeting, todayLong, timeNow, fmtDate, daysLabel, cardHead, emptyMini,
 } from '../utils.js';
 import { upcomingCountdowns } from './countdowns.js';
 import { dashboardTasks, taskRow } from './tasks.js';
@@ -11,6 +11,7 @@ import { upcomingSpecialDays, specialRow } from './birthdays.js';
 import { todayCard } from './calendar.js';
 import { homeCard as rewardsCard } from './rewards.js';
 import { homeCard as routinesCard } from './habits.js';
+import { homeCard as dinnerCard } from './meals.js';
 
 function countdownsCard() {
   const list = upcomingCountdowns().filter(c => c.show_on_dashboard).slice(0, 4);
@@ -67,7 +68,7 @@ function quickAddCard() {
       <button data-action="countdown-new">＋ Countdown</button>
       <button data-action="chore-new">＋ Chore</button>
       <button data-action="event-new">＋ Event</button>
-      <button disabled title="Arrives with meal planning in Alpha 0.7">＋ Meal</button>
+      <button data-action="meal-new">＋ Meal</button>
     </div></div>`;
 }
 
@@ -106,7 +107,7 @@ export function view() {
       ${countdownsCard()}
       ${membersCard()}
       ${tasksCard()}
-      ${soonCard('🍽️', 'Dinner Tonight', 'Alpha 0.7', 'Tonight\'s meal from the weekly plan, with a link to the recipe.')}
+      ${dinnerCard()}
       ${groceryCard()}
       ${rewardsCard()}
       ${birthdaysCard()}

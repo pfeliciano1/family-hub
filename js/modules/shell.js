@@ -13,6 +13,9 @@ import * as calendar from './calendar.js';
 import * as rewards from './rewards.js';
 import * as routines from './routines.js';
 import * as habits from './habits.js';
+import * as meals from './meals.js';
+import * as recipes from './recipes.js';
+import * as lists from './lists.js';
 
 // Sections that are built. Everything else in NAV shows a roadmap page.
 const VIEWS = {
@@ -27,6 +30,9 @@ const VIEWS = {
   rewards: rewards.view,
   routines: routines.view,
   habits: habits.view,
+  meals: meals.view,
+  recipes: recipes.view,
+  lists: lists.view,
 };
 
 const MOBILE_TABS = ['home', 'calendar', 'tasks', 'grocery'];
@@ -74,7 +80,7 @@ export function shellView() {
       ${renderView()}
       <footer class="footer">
         <span>${state.live ? '<span class="live">● Live sync on</span>' : '<span class="offline">○ Connecting…</span>'}</span>
-        <span>Family Hub • Alpha 0.6.1${state.tv ? ' • TV Display' : ''}</span>
+        <span>Family Hub • Alpha 0.7${state.tv ? ' • TV Display' : ''}</span>
       </footer>
     </main>
 

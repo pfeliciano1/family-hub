@@ -24,6 +24,15 @@ export const state = {
   checks: [],          // routine step check-offs, last 7 days
   habits: [],
   habitLogs: [],
+  // Food (0.7)
+  foodMissing: false,  // true until the 0.7 database script is run
+  recipes: [],
+  meals: [],           // meal plan, last 180 days and ahead
+  lists: [],
+  listItems: [],
+  mealWeek: null,      // the Sunday the meal planner is showing (YYYY-MM-DD)
+  recipeTag: '',       // Recipes page filter
+  recipeQuery: '',
   kidId: null,         // Kid mode: the child using this device
   kidPicker: false,    // Kid mode: choosing who's using the device
   choreEdit: false,    // Tasks page: showing the chore manager

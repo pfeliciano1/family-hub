@@ -1,10 +1,10 @@
-# Family Hub — Alpha 0.6
+# Family Hub — Alpha 0.7
 
 A private family command center: shared calendar, tasks, groceries, countdowns,
 weather, and more, on every device in the house. Runs at $0/month on
 GitHub Pages (hosting) and Supabase (database, logins, live sync).
 
-## What works in Alpha 0.6
+## What works in Alpha 0.7
 
 - Email + password accounts, password reset
 - Create a family, or join one with an invite code
@@ -31,7 +31,13 @@ GitHub Pages (hosting) and Supabase (database, logins, live sync).
 - Kid mode: a kid-sized screen for a shared tablet, with a PIN per child and
   a parent PIN to leave
 
-Meals, recipes, lists, and the rest are on the roadmap
+- Meals: a weekly meal plan with Dinner Tonight on Home, meal history, and
+  ideas for what to make next
+- Recipes with ingredients and steps; send a recipe's (or the whole week's)
+  ingredients to the grocery list
+- Lists: shared checklists for packing, school supplies, ideas, anything
+
+Gifts, home projects, memories, and the rest are on the roadmap
 (see `DEVELOPMENT_LOG.md`).
 
 ## First-time setup
@@ -141,6 +147,25 @@ Reward requests work the same way; approving one takes the points away.
 Kid mode is a convenience lock for a family device, not a security feature:
 the device stays signed in with a parent's account.
 
+## Setting up meals, recipes, and lists
+**A. Update the database.** In Supabase's **SQL Editor**, open a new query,
+paste all of `database/setup.sql`, and click **Run** (the "destructive
+operations" warning is expected). It adds the food and list tables and keeps
+your data.
+
+**B. Upload the new app files** to GitHub the usual way and hard refresh
+(Ctrl+Shift+R; on phones, close and reopen the app). The footer should say
+**Alpha 0.7**.
+
+**C. Try it:**
+1. **Recipes → ＋ New recipe.** Put one ingredient per line, like
+   `1 lb ground beef`. Tags like `quick` or `kid favorite` become filters.
+2. **Meals:** tap a day to plan dinner, from a recipe or just a name like
+   "Leftovers". Tick **Breakfast & lunch** if you plan those too.
+3. **🛒 Add this week's ingredients** (Meals page) or **Add to grocery** (on a
+   recipe) shows a checklist; uncheck what you already have.
+4. **Lists → ＋ New list**, starting from a template or blank.
+
 ## Updating later
 Upload the changed files to GitHub the same way. Your data lives in
 Supabase, so updating the app never touches it. If a new version includes a
@@ -173,9 +198,10 @@ js/data.js          loading, saving, live sync
 js/session.js       sign-in / sign-out handling
 js/nav.js           list of sections (and which are coming soon)
 js/modules/         one file per section: home, calendar, tasks, chores,
-                    rewards, routines, habits, kidmode, grocery, countdowns,
-                    birthdays, weather, settings, auth, shell
-                    (kids.js holds what chores/rewards/routines/habits share)
+                    rewards, routines, habits, kidmode, meals, recipes, lists,
+                    grocery, countdowns, birthdays, weather, settings, auth, shell
+                    (kids.js holds what chores/rewards/routines/habits share;
+                    food.js holds meal history and recipe-to-grocery)
 database/setup.sql  tables, security rules, live sync
 supabase/functions/calendar-feed/index.ts
                     server function that reads the iCal addresses

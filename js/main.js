@@ -18,11 +18,15 @@ import * as rewards from './modules/rewards.js';
 import * as routines from './modules/routines.js';
 import * as habits from './modules/habits.js';
 import * as kidmode from './modules/kidmode.js';
+import * as food from './modules/food.js';
+import * as recipes from './modules/recipes.js';
+import * as meals from './modules/meals.js';
+import * as lists from './modules/lists.js';
 import * as home from './modules/home.js';
 
 // Each module contributes its own buttons (actions), forms, and checkboxes (toggles).
 const modules = [auth, shell, countdowns, tasks, grocery, settings, weather, calendar,
-  chores, rewards, routines, habits, kidmode, home];
+  chores, rewards, routines, habits, kidmode, food, recipes, meals, lists, home];
 const actions = {
   'close-modal': () => closeModal(),
   'close-modal-backdrop': () => closeModal(),
@@ -166,6 +170,7 @@ async function boot() {
   state.view = viewFromHash();
   try { state.tv = localStorage.getItem('familyHub.tv') === '1'; } catch { /* private mode */ }
   kidmode.restore();
+  recipes.bindSearch();
 
   if (!configured) {
     update({ loading: false });

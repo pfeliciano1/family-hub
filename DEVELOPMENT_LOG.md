@@ -83,7 +83,7 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 ---
 
 ## Alpha 0.6 — Kids
-**Status:** Current (built 2026-09-25; needs the database script run again)
+**Status:** Deployed 2026-09-25
 
 ### Built
 - **Chores** (Chores tab on Tasks & Chores): every day, certain weekdays, or once; points per chore; optional parent approval; pause without deleting. Missed one-time chores stay on the list marked Late.
@@ -115,14 +115,32 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 
 ---
 
-## Next Development Priorities
+## Alpha 0.7 — Food
+**Status:** Current (built 2026-09-26; needs the database script run again)
 
-### Alpha 0.7 — Food
-10. Weekly meal planner, Dinner Tonight card
-11. Recipes with ingredients
-12. Recipe-to-grocery list
-13. Meal history ("last had tacos 12 days ago") and simple suggestions
-14. Custom lists (packing, ideas, school supplies)
+### Built
+- **Meals page:** a Sunday-to-Saturday planner with week arrows. Dinner always shows; a "Breakfast & lunch" checkbox (remembered per device) adds the other two. Each meal is a recipe or just a name ("Leftovers", "Pizza night"), with an optional note.
+- **Dinner Tonight** card on Home with a View recipe link and tomorrow's dinner. When nothing is planned it suggests a recipe with a one-tap "Make it tonight". Quick Add ＋ Meal works.
+- **Recipes page:** search (title, ingredients, tags), tag filters, cards with time, servings, and "Last had 12 days ago". Each recipe has ingredients and steps (one per line), time, servings, tags, and a link to the original.
+- **Recipe to grocery list:** from a recipe or "Add this week's ingredients" on the Meals page. A checklist shows each ingredient with its amount; things already on the grocery list and pantry basics (salt, pepper, oil, flour, sugar…) start unchecked. Items are sorted into store sections automatically.
+- **History and suggestions:** "Ideas for this week" lists recipes never made first, then the longest since last time, skipping anything already planned in the next week. "Recent dinners" shows the last two weeks.
+- **Lists page:** any number of shared checklists, starting blank or from a template (Trip packing, School supplies, Ideas). Check off, add, remove, Uncheck all (reuse a packing list), Remove checked, rename, delete.
+
+### Decisions
+- Ingredients are plain text, one per line, instead of a structured table. It's how people copy recipes, and the grocery import splits amounts from names well enough ("2 lbs ground beef" → ground beef, 2 lbs), with a checklist to fix anything before it's added.
+- One meal per day and slot, enforced by the database. Deleting a recipe keeps past and planned meals by name.
+- Meal history uses the plan itself (the last 180 days), so there's nothing extra to log.
+- Lists live with Food in this version because packing and school-supply lists were on the 0.7 roadmap; they aren't food-specific.
+- If the 0.7 database update hasn't been run, the rest of the app keeps working and the food sections explain what to do.
+
+### Testing
+- Database script run on top of the 0.6 test database, then again: data kept; food tables isolated between families; another family can't plan a meal with your recipe or add to your list even knowing the ID; a second dinner on the same day is rejected; signed-out access denied.
+- Headless browser: Dinner Tonight empty and planned, Make it tonight, planning by name and by recipe, changing a meal, breakfast and lunch, this week's ingredients into the grocery list (sections and "on the list" detection), recipe search, tags, add, plan, delete, lists from a template, add, check, uncheck all, remove checked, rename, delete, the no-database-update state, TV and phone layouts. The 0.6 kids test still passes. No errors.
+- Not yet tested against Paul's live Supabase project.
+
+---
+
+## Next Development Priorities
 
 ### Alpha 0.8 — Family Life
 15. Gift tracker
@@ -163,7 +181,8 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 | FEAT-002 | Feature | Done (0.5) | Google Calendar integration (read-only, via secret iCal addresses) |
 | FEAT-003 | Feature | Done (0.6) | Authentication, family roles, and kid PIN profiles (Kid mode) |
 | FEAT-004 | Feature | Done (0.6) | Tasks, chores with points, and rewards |
-| FEAT-005 | Feature | Partial (0.4) | Grocery list done; meals and recipes in 0.7 |
+| FEAT-005 | Feature | Done (0.7) | Grocery list, meal planner, recipes, recipe-to-grocery, meal history |
+| FEAT-011 | Feature | Done (0.7) | Custom shared lists with templates |
 | FEAT-006 | Feature | Done (0.5) | Weather and clothing engine, with activity-aware tips |
 | FEAT-007 | Feature | Partial (0.4) | TV mode wake lock, full screen, large text; auto-rotation later |
 | FEAT-008 | Feature | Planned | Family Assistant / natural-language Quick Add |
@@ -183,3 +202,4 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - **0.5** — Calendar: Google calendars combined by family member, Today card, day/week/month views, weather tips for events, + Event
 - **0.6** — Kids: chores with points and approvals, rewards and goals, routines, habits with streaks, Kid mode with PINs
 - **0.6.1** — Calendar freeze fix; iPhone/iPad home screen tip
+- **0.7** — Food: weekly meal plan, Dinner Tonight, recipes, recipe-to-grocery, meal history and suggestions, custom lists

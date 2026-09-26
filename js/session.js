@@ -10,6 +10,7 @@ const EMPTY = {
   calendars: [], calendarsMissing: false, events: null,
   kidsMissing: false, rewards: [], chores: [], completions: [], claims: [], points: [], balances: {},
   routines: [], steps: [], checks: [], habits: [], habitLogs: [],
+  foodMissing: false, recipes: [], meals: [], lists: [], listItems: [],
   weather: null, locResults: [], live: false,
 };
 

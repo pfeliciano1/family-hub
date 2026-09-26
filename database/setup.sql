@@ -1,5 +1,5 @@
 -- =====================================================================
--- Family Hub — Alpha 0.6 database setup
+-- Family Hub — Alpha 0.7 database setup
 --
 -- How to run: Supabase dashboard → SQL Editor → New query →
 -- paste this whole file → Run.
@@ -282,6 +282,64 @@ create table if not exists public.habit_logs (
 );
 create index if not exists habit_logs_family_idx on public.habit_logs (family_id, for_date);
 
+-- ---------------------------------------------------------------------
+-- 3c. Food (Alpha 0.7): recipes, meal plan, custom lists
+-- ---------------------------------------------------------------------
+
+create table if not exists public.recipes (
+  id           uuid primary key default gen_random_uuid(),
+  family_id    uuid not null default public.my_family_id()
+               references public.families(id) on delete cascade,
+  title        text not null check (length(trim(title)) > 0),
+  icon         text not null default '🍽️',
+  ingredients  text not null default '',   -- one per line, e.g. "2 lbs ground beef"
+  steps        text not null default '',
+  prep_minutes integer check (prep_minutes is null or prep_minutes between 0 and 1440),
+  servings     integer check (servings is null or servings between 1 and 100),
+  tags         text[] not null default '{}',
+  source_url   text check (source_url is null or source_url ~* '^https?://'),
+  created_at   timestamptz not null default now()
+);
+create index if not exists recipes_family_idx on public.recipes (family_id);
+
+-- One meal per day and slot. A meal is a recipe, or just a name
+-- ("Leftovers", "Pizza night").
+create table if not exists public.meal_plan (
+  id         uuid primary key default gen_random_uuid(),
+  family_id  uuid not null default public.my_family_id()
+             references public.families(id) on delete cascade,
+  plan_date  date not null,
+  slot       text not null default 'dinner' check (slot in ('breakfast', 'lunch', 'dinner')),
+  recipe_id  uuid references public.recipes(id) on delete set null,
+  title      text not null check (length(trim(title)) > 0),
+  note       text,
+  created_at timestamptz not null default now(),
+  unique (family_id, plan_date, slot)
+);
+create index if not exists meal_plan_family_idx on public.meal_plan (family_id, plan_date);
+
+create table if not exists public.lists (
+  id         uuid primary key default gen_random_uuid(),
+  family_id  uuid not null default public.my_family_id()
+             references public.families(id) on delete cascade,
+  name       text not null check (length(trim(name)) > 0),
+  icon       text not null default '📝',
+  created_at timestamptz not null default now()
+);
+create index if not exists lists_family_idx on public.lists (family_id);
+
+create table if not exists public.list_items (
+  id         uuid primary key default gen_random_uuid(),
+  family_id  uuid not null default public.my_family_id()
+             references public.families(id) on delete cascade,
+  list_id    uuid not null references public.lists(id) on delete cascade,
+  text       text not null check (length(trim(text)) > 0),
+  is_checked boolean not null default false,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists list_items_family_idx on public.list_items (family_id);
+
 -- Everyone's point balance in one call (a long history can exceed the
 -- number of rows the app loads at once).
 create or replace function public.points_balances()
@@ -396,6 +454,10 @@ alter table public.routine_steps     enable row level security;
 alter table public.routine_checks    enable row level security;
 alter table public.habits            enable row level security;
 alter table public.habit_logs        enable row level security;
+alter table public.recipes           enable row level security;
+alter table public.meal_plan         enable row level security;
+alter table public.lists             enable row level security;
+alter table public.list_items        enable row level security;
 
 -- families
 drop policy if exists "Members can view their family" on public.families;
@@ -466,7 +528,8 @@ declare
   t text;
 begin
   foreach t in array array['rewards', 'chores', 'chore_completions', 'reward_claims', 'point_entries',
-                           'routines', 'routine_steps', 'routine_checks', 'habits', 'habit_logs'] loop
+                           'routines', 'routine_steps', 'routine_checks', 'habits', 'habit_logs',
+                           'recipes', 'meal_plan', 'lists', 'list_items'] loop
     execute format('drop policy if exists "Family can manage %s" on public.%I', t, t);
     execute format('create policy "Family can manage %s" on public.%I for all to authenticated
                     using (family_id = public.my_family_id())
@@ -496,7 +559,9 @@ begin
       ('chores',         'chore_id'),
       ('routines',       'routine_id'),
       ('routine_steps',  'step_id'),
-      ('habits',         'habit_id')
+      ('habits',         'habit_id'),
+      ('recipes',        'recipe_id'),
+      ('lists',          'list_id')
     ) as v(tbl, col)
     where row_json ->> v.col is not null
   loop
@@ -516,7 +581,7 @@ declare
 begin
   foreach t in array array['tasks', 'calendars', 'family_members', 'rewards', 'chores', 'chore_completions',
                            'reward_claims', 'point_entries', 'routines', 'routine_steps',
-                           'routine_checks', 'habits', 'habit_logs'] loop
+                           'routine_checks', 'habits', 'habit_logs', 'meal_plan', 'list_items'] loop
     execute format('drop trigger if exists same_family on public.%I', t);
     execute format('create trigger same_family before insert or update on public.%I
                     for each row execute function public.same_family_check()', t);
@@ -537,7 +602,8 @@ revoke all on public.families, public.family_members, public.countdowns,
               public.tasks, public.grocery_items, public.calendars,
               public.rewards, public.chores, public.chore_completions, public.reward_claims,
               public.point_entries, public.routines, public.routine_steps, public.routine_checks,
-              public.habits, public.habit_logs from anon;
+              public.habits, public.habit_logs,
+              public.recipes, public.meal_plan, public.lists, public.list_items from anon;
 
 grant select on public.families to authenticated;
 grant update (name, location_name, latitude, longitude, temp_unit, parent_pin_hash)
@@ -555,7 +621,8 @@ grant select, insert, update, delete
   on public.countdowns, public.tasks, public.grocery_items, public.calendars,
      public.rewards, public.chores, public.chore_completions, public.reward_claims,
      public.point_entries, public.routines, public.routine_steps, public.routine_checks,
-     public.habits, public.habit_logs to authenticated;
+     public.habits, public.habit_logs,
+     public.recipes, public.meal_plan, public.lists, public.list_items to authenticated;
 
 revoke all on function public.my_family_id()              from public, anon;
 revoke all on function public.i_am_parent()               from public, anon;
@@ -580,7 +647,8 @@ declare
 begin
   foreach t in array array['families', 'family_members', 'countdowns', 'tasks', 'grocery_items', 'calendars',
                            'rewards', 'chores', 'chore_completions', 'reward_claims', 'point_entries',
-                           'routines', 'routine_steps', 'routine_checks', 'habits', 'habit_logs'] loop
+                           'routines', 'routine_steps', 'routine_checks', 'habits', 'habit_logs',
+                           'recipes', 'meal_plan', 'lists', 'list_items'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
