@@ -156,10 +156,23 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - One photo per memory keeps the page simple; albums can come later.
 - Money is shown in US dollars.
 
+### Fix (2026-09-28)
+- **BUG-003 fixed:** a routine's bonus was only paid when a step was checked, so setting or changing the bonus after all steps were already done showed "Finished! +6" but paid nothing. Saving a routine now settles today's bonus right away (gives it, corrects the amount, or takes it back). Only js/modules/routines.js changed.
+
+- **BUG-004 fixed (database):** the 0.8 script's same-family rule also checked `created_by` on older tables (tasks, calendars, point entries), where it holds the login rather than a family member, so adding points, tasks, or calendars failed with "That item belongs to a different family." The rule now checks `created_by` only on gifts and memories. Fixed by running the updated setup.sql. A write test across every table now runs before any database change ships.
+
 ### Testing
 - Database script run on top of the 0.7 test database, then again: data kept. Tested with two logins in one family plus an outsider: a gift for Ana is invisible to Ana and she can't change or delete it; gifts for kids, for yourself, and for people outside the family are visible to the family; outsiders see nothing; another family can't link a gift, project step, or photo to yours; negative amounts rejected; photos can only be saved in your own family's folder; signed-out access denied.
 - Headless browser: every gift, project, and memory flow above, photo upload with preview, replace and remove (storage cleaned up), missing photos (placeholder, no endless retries), the no-database-update state, and phone layouts. The 0.6 kids and 0.7 food tests still pass. No errors.
 - Not yet tested against Paul's live Supabase project.
+
+---
+
+## Alpha 0.8.1 — Stars per routine step (2026-09-28)
+- Paul asked for partial credit on routines. Each routine now has a Stars setting: **for each step checked** (e.g. 4 of 6 steps = 4 stars) or **only for finishing every step** (the old behavior, still the default for existing routines). New routines start at 1 star per step.
+- One point entry per routine per day, resized as steps are checked or unchecked ("Morning routine (4 of 6)"), so the history stays tidy and nothing is double-counted.
+- Database: adds `routines.reward_mode`. Run setup.sql again. Files: js/modules/routines.js, js/modules/shell.js (version), styles.css (version), database/setup.sql.
+- Tested: 4 of 6 = 4, unchecking one takes a star back, all 6 = 6, switching to finish-only corrects the total; script run twice; write test across every table passes; kids tests pass.
 
 ---
 
@@ -208,6 +221,8 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 | FEAT-012 | Feature | Done (0.8) | Gift tracker hidden from the recipient |
 | FEAT-013 | Feature | Done (0.8) | Home projects with steps and budget |
 | FEAT-014 | Feature | Done (0.8) | Family memories with private photos and "On this day" |
+| BUG-003 | Bug | Fixed (0.8) | Routine bonus not paid when set after the steps were already checked |
+| BUG-004 | Bug | Fixed (0.8) | 0.8 database rule blocked points, tasks, and calendars ("belongs to a different family") |
 | FEAT-015 | Feature | Planned | Push notifications |
 | FEAT-006 | Feature | Done (0.5) | Weather and clothing engine, with activity-aware tips |
 | FEAT-007 | Feature | Partial (0.4) | TV mode wake lock, full screen, large text; auto-rotation later |
@@ -230,3 +245,4 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - **0.6.1** — Calendar freeze fix; iPhone/iPad home screen tip
 - **0.7** — Food: weekly meal plan, Dinner Tonight, recipes, recipe-to-grocery, meal history and suggestions, custom lists
 - **0.8** — Family life: gifts (hidden from the recipient), home projects with budgets, family memories with photos
+- **0.8.1** — Routine stars per step

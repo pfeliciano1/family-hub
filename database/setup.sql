@@ -1,5 +1,5 @@
 -- =====================================================================
--- Family Hub — Alpha 0.8 database setup
+-- Family Hub — Alpha 0.8.1 database setup
 --
 -- How to run: Supabase dashboard → SQL Editor → New query →
 -- paste this whole file → Run.
@@ -245,6 +245,10 @@ create table if not exists public.routines (
   created_at timestamptz not null default now()
 );
 create index if not exists routines_family_idx on public.routines (family_id);
+-- 0.8.1: 'finish' pays the bonus for finishing every step;
+-- 'per_step' pays the bonus for each step checked.
+alter table public.routines add column if not exists reward_mode text not null default 'finish'
+  check (reward_mode in ('finish', 'per_step'));
 
 create table if not exists public.routine_steps (
   id         uuid primary key default gen_random_uuid(),
@@ -705,6 +709,9 @@ begin
       ('projects',       'project_id')
     ) as v(tbl, col)
     where row_json ->> v.col is not null
+      -- created_by holds a family member only on gifts and memories; on
+      -- older tables (tasks, calendars, points) it holds the login instead
+      and (v.col <> 'created_by' or tg_table_name in ('gifts', 'memories'))
   loop
     execute format('select exists (select 1 from public.%I where id = $1 and family_id = $2)', ref.tbl)
       into ok using ref.id::uuid, new.family_id;

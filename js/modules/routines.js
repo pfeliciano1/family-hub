@@ -9,6 +9,23 @@ import {
   kidsSetupNotice, ICONS, iconPicker, memberOptions, children, newId,
 } from './kids.js';
 
+const perStep = r => r.reward_mode === 'per_step';
+
+// Stars today's checks are worth: per step checked, or once for finishing.
+function earnedToday(r, done, total) {
+  if (!r.bonus) return 0;
+  if (perStep(r)) return done * r.bonus;
+  return total > 0 && done === total ? r.bonus : 0;
+}
+
+function rewardLine(r, done, finished) {
+  if (!r.bonus) return '';
+  if (perStep(r)) {
+    return `<small class="muted">${done ? `+${done * r.bonus} ⭐ today` : 'Nothing checked yet'} • ${r.bonus} ⭐ per step${finished ? ' 🎉' : ''}</small>`;
+  }
+  return `<small class="muted">${finished ? `Finished! +${r.bonus} ⭐` : `Finish all for +${r.bonus} ⭐`}</small>`;
+}
+
 export function routineCard(r, kid = false) {
   const m = memberById(r.member_id);
   const { done, total } = routineProgress(r);
@@ -27,7 +44,7 @@ export function routineCard(r, kid = false) {
       return `<label class="check step ${on ? 'on' : ''}"><input type="checkbox" data-toggle="step-done" data-id="${esc(s.id)}" ${on ? 'checked' : ''}>
         <span>${esc(s.title)}</span></label>`;
     }).join('')}
-    ${r.bonus ? `<small class="muted">${finished ? `Finished! +${r.bonus} ⭐` : `Finish all for +${r.bonus} ⭐`}</small>` : ''}
+    ${rewardLine(r, done, finished)}
   </div>`;
 }
 
@@ -64,8 +81,15 @@ function form(r = {}) {
       <div class="field"><label>Icon</label>${iconPicker('icon', ICONS.routine, r.icon)}</div>
       <div class="field"><label for="rt-steps">Steps, one per line</label>
         <textarea id="rt-steps" name="steps" rows="6" required placeholder="Get dressed&#10;Eat breakfast&#10;Brush teeth&#10;Pack backpack">${esc(steps)}</textarea></div>
-      <div class="field"><label for="rt-bonus">Bonus points for finishing (optional)</label>
-        <input id="rt-bonus" type="number" name="bonus" min="0" max="1000" value="${esc(r.bonus ?? 0)}"></div>
+      <div class="field-row">
+        <div class="field"><label for="rt-mode">Stars</label>
+          <select id="rt-mode" name="reward_mode">
+            <option value="per_step" ${perStep(r) || isNew ? 'selected' : ''}>For each step checked</option>
+            <option value="finish" ${perStep(r) || isNew ? '' : 'selected'}>Only for finishing every step</option>
+          </select></div>
+        <div class="field"><label for="rt-bonus">How many (0 for none)</label>
+          <input id="rt-bonus" type="number" name="bonus" min="0" max="1000" value="${esc(r.bonus ?? (isNew ? 1 : 0))}"></div>
+      </div>
       <div class="modal-actions">
         <button type="button" class="btn" data-action="close-modal">Cancel</button>
         <button type="submit" class="btn primary">${isNew ? 'Add routine' : 'Save changes'}</button>
@@ -73,14 +97,17 @@ function form(r = {}) {
     </form>`;
 }
 
-// Gives the bonus when every step is done today, and takes it back if a
-// step gets unchecked.
+// Makes today's stars match the routine: one entry per routine per day,
+// resized whenever a step is checked or unchecked, or the routine changes.
 async function settleBonus(routine) {
-  if (!routine.bonus) return;
   const { done, total } = routineProgress(routine);
   const key = `routine:${routine.id}:${today()}`;
-  if (total > 0 && done === total) await awardPoints(routine.member_id, routine.bonus, `${routine.icon} ${routine.name} routine`, 'routine', key);
-  else if (state.points.some(p => p.ref_key === key)) await removePoints(key);
+  const want = earnedToday(routine, done, total);
+  const given = state.points.find(p => p.ref_key === key);
+  if (given && given.amount === want) return;
+  if (given) await removePoints(key);
+  const reason = perStep(routine) ? `${routine.icon} ${routine.name} routine (${done} of ${total})` : `${routine.icon} ${routine.name} routine`;
+  if (want) await awardPoints(routine.member_id, want, reason, 'routine', key);
 }
 
 export const actions = {
@@ -120,6 +147,7 @@ export const forms = {
       member_id: d.member_id,
       icon: d.icon || ICONS.routine[0],
       bonus: Math.max(0, Math.min(1000, parseInt(d.bonus, 10) || 0)),
+      reward_mode: d.reward_mode === 'per_step' ? 'per_step' : 'finish',
     };
     if (!row.name || !titles.length) return;
     let id = d.id;
@@ -146,6 +174,12 @@ export const forms = {
     const gone = existing.filter(s => !used.has(s.id)).map(s => s.id);
     if (gone.length) await run(sb.from('routine_steps').delete().in('id', gone));
     closeModal();
-    await Promise.all([refresh('routines'), refresh('steps'), refresh('checks')]);
+    await Promise.all([refresh('routines'), refresh('steps'), refresh('checks'), refresh('points')]);
+    // Steps already checked today count right away (e.g. a bonus added
+    // after the routine was finished)
+    const routine = state.routines.find(r => r.id === id);
+    if (routine) await settleBonus(routine);
+    refresh('balances');
+    refresh('points');
   },
 };
