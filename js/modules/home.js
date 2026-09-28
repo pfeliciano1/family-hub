@@ -10,10 +10,12 @@ import { heroWeather, weatherCard } from './weather.js';
 import { upcomingSpecialDays, specialRow } from './birthdays.js';
 import { todayCard } from './calendar.js';
 import { homeCard as rewardsCard } from './rewards.js';
-import { homeCard as routinesCard } from './habits.js';
+import { routinesHomeCard, habitsHomeCard } from './habits.js';
 import { homeCard as dinnerCard } from './meals.js';
 import { homeCard as projectsCard } from './projects.js';
 import { homeCard as memoryCard } from './memories.js';
+import { homeCard as listsCard } from './lists.js';
+import { homeCard as recipesCard } from './recipes.js';
 
 function countdownsCard() {
   const list = upcomingCountdowns().filter(c => c.show_on_dashboard).slice(0, 4);
@@ -63,7 +65,8 @@ function birthdaysCard() {
 }
 
 function quickAddCard() {
-  return `<div class="card">${cardHead('⚡', 'Quick Add')}
+  if (state.tv) return ''; // nothing to tap on the TV
+  return `<div class="card quick-card">${cardHead('⚡', 'Quick Add')}
     <div class="quick">
       <button data-action="task-new">＋ Task</button>
       <button data-action="grocery-new">＋ Grocery</button>
@@ -73,6 +76,7 @@ function quickAddCard() {
       <button data-action="meal-new">＋ Meal</button>
       <button data-action="memory-new">＋ Memory</button>
       <button data-action="project-new">＋ Project</button>
+      <button data-action="list-new">＋ List</button>
     </div></div>`;
 }
 
@@ -108,17 +112,20 @@ export function view() {
     </section>
     <div class="grid">
       ${todayCard()}
-      ${countdownsCard()}
-      ${membersCard()}
       ${tasksCard()}
+      ${quickAddCard()}
       ${dinnerCard()}
       ${groceryCard()}
+      ${listsCard()}
       ${rewardsCard()}
+      ${routinesHomeCard()}
+      ${habitsHomeCard()}
+      ${countdownsCard()}
       ${birthdaysCard()}
-      ${routinesCard()}
-      ${memoryCard()}
       ${projectsCard()}
+      ${recipesCard()}
+      ${memoryCard()}
       ${weatherCard()}
-      ${quickAddCard()}
+      ${membersCard()}
     </div>`;
 }

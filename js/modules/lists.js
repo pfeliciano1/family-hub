@@ -1,7 +1,7 @@
 // Lists: any shared checklist the family needs (packing, ideas, school supplies).
 import { sb } from '../supabase.js';
 import { state } from '../state.js';
-import { esc, openModal, closeModal, toast } from '../utils.js';
+import { esc, openModal, closeModal, toast, cardHead } from '../utils.js';
 import { run, refresh } from '../data.js';
 import { foodSetupNotice } from './food.js';
 import { iconPicker } from './kids.js';
@@ -174,3 +174,23 @@ export const forms = {
     }
   },
 };
+
+// Home card: each list with how much is left, and the next few items
+export function homeCard() {
+  const head = cardHead('📝', 'Lists', 'lists');
+  if (state.foodMissing) return `<div class="card">${head}<div class="empty-mini">Run the Alpha 0.7 database update to turn on lists.</div></div>`;
+  if (!state.lists.length) {
+    return `<div class="card">${head}<div class="empty-mini">Packing, school supplies, ideas. <button class="link" data-action="list-new">Make a list</button></div></div>`;
+  }
+  const rows = state.lists.map(l => {
+    const items = itemsOf(l.id);
+    const open = items.filter(i => !i.is_checked);
+    return { l, items, open };
+  }).sort((a, b) => b.open.length - a.open.length);
+  return `<div class="card">${head}
+    ${rows.slice(0, 3).map(({ l, items, open }) => `<a class="home-list" href="#/lists">
+      <span>${esc(l.icon)} <b>${esc(l.name)}</b><small>${open.length ? `${open.length} left` : 'All done ✔️'} • ${items.length - open.length}/${items.length}</small></span>
+      ${open.length ? `<small class="muted">${open.slice(0, 3).map(i => esc(i.text)).join(' • ')}${open.length > 3 ? ' …' : ''}</small>` : ''}
+    </a>`).join('')}
+    ${rows.length > 3 ? `<a class="more" href="#/lists">+${rows.length - 3} more</a>` : ''}</div>`;
+}

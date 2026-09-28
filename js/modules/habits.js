@@ -5,7 +5,7 @@ import { esc, avatar, openModal, closeModal, startOfToday, toISODate, fmtDate, c
 import { run, refresh } from '../data.js';
 import {
   today, everyone, memberById, habitDone, streak, routineProgress, kidsSetupNotice, ICONS, iconPicker,
-  memberOptions, children,
+  memberOptions, children, progressBar,
 } from './kids.js';
 
 function lastWeek() {
@@ -49,28 +49,40 @@ export function view() {
     </div>`).join('')}</div>`;
 }
 
-// Home card: each person's routines and habits for today.
-export function homeCard() {
-  const head = cardHead('❤️', 'Routines & Habits', 'routines');
-  if (state.kidsMissing) return `<div class="card">${head}<div class="empty-mini">Run the Alpha 0.6 database update to turn on routines and habits.</div></div>`;
-  const people = everyone().filter(m => state.routines.some(r => r.member_id === m.id) || state.habits.some(h => h.member_id === m.id));
+// Home card: each person's routines for today, with progress.
+export function routinesHomeCard() {
+  const head = cardHead('🔄', 'Routines', 'routines');
+  if (state.kidsMissing) return `<div class="card">${head}<div class="empty-mini">Run the Alpha 0.6 database update to turn on routines.</div></div>`;
+  const people = everyone().filter(m => state.routines.some(r => r.member_id === m.id));
   if (!people.length) {
-    return `<div class="card">${head}<div class="empty-mini">Add a <a href="#/routines">morning routine</a> or a <a href="#/habits">daily habit</a>.</div></div>`;
+    return `<div class="card">${head}<div class="empty-mini">Morning and bedtime checklists. <button class="link" data-action="routine-new">Add a routine</button></div></div>`;
+  }
+  return `<div class="card">${head}${people.map(m => `<div class="rh-row">${avatar(m)}<div class="home-routines">
+    ${state.routines.filter(r => r.member_id === m.id).map(r => {
+      const { done, total } = routineProgress(r);
+      const finished = total > 0 && done === total;
+      return `<a class="home-routine ${finished ? 'ok' : ''}" href="#/routines">
+        <span>${esc(r.icon)} ${esc(r.name)}</span><b>${finished ? '🎉 ' : ''}${done}/${total}</b>
+        ${progressBar(done, total, m.color)}</a>`;
+    }).join('')}</div></div>`).join('')}</div>`;
+}
+
+// Home card: today's habits, checkable right here, with streaks.
+export function habitsHomeCard() {
+  const head = cardHead('❤️', 'Habits', 'habits');
+  if (state.kidsMissing) return `<div class="card">${head}<div class="empty-mini">Run the Alpha 0.6 database update to turn on habits.</div></div>`;
+  const people = everyone().filter(m => state.habits.some(h => h.member_id === m.id));
+  if (!people.length) {
+    return `<div class="card">${head}<div class="empty-mini">Reading, water, practice. <button class="link" data-action="habit-new">Add a habit</button></div></div>`;
   }
   const t = today();
-  return `<div class="card">${head}${people.map(m => {
-    const items = [
-      ...state.routines.filter(r => r.member_id === m.id).map(r => {
-        const { done, total } = routineProgress(r);
-        return `<span class="rh ${total && done === total ? 'ok' : ''}">${esc(r.icon)} ${esc(r.name)} ${done}/${total}</span>`;
-      }),
-      ...state.habits.filter(h => h.member_id === m.id).map(h => {
-        const s = streak(h.id);
-        return `<span class="rh ${habitDone(h.id, t) ? 'ok' : ''}">${esc(h.icon)} ${esc(h.title)}${s ? ` 🔥${s}` : ''}</span>`;
-      }),
-    ];
-    return `<div class="rh-row">${avatar(m)}<div>${items.join('')}</div></div>`;
-  }).join('')}</div>`;
+  return `<div class="card">${head}${people.map(m => `<div class="rh-row">${avatar(m)}<div class="home-habits">
+    ${state.habits.filter(h => h.member_id === m.id).map(h => {
+      const on = habitDone(h.id, t);
+      const s = streak(h.id);
+      return `<label class="check home-habit ${on ? 'on' : ''}"><input type="checkbox" data-toggle="habit-done" data-id="${esc(h.id)}" ${on ? 'checked' : ''}>
+        <span>${esc(h.icon)} ${esc(h.title)}</span><small>${s ? `🔥 ${s}` : ''}</small></label>`;
+    }).join('')}</div></div>`).join('')}</div>`;
 }
 
 function form(h = {}) {

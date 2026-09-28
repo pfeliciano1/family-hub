@@ -126,12 +126,19 @@ export function view() {
   return p && !state.lifeMissing ? detailView(p) : listView();
 }
 
-// Home card: projects in progress (only shown when there are some)
+// Home card: projects in progress, or what's planned next
 export function homeCard() {
-  if (state.lifeMissing) return '';
+  const head = cardHead('🔨', 'Home Projects', 'projects');
+  if (state.lifeMissing) return `<div class="card">${head}<div class="empty-mini">Run the Alpha 0.8 database update to turn on home projects.</div></div>`;
   const doing = state.projects.filter(p => p.status === 'doing');
-  if (!doing.length) return '';
-  return `<div class="card">${cardHead('🔨', 'Home Projects', 'projects')}
+  if (!doing.length) {
+    const planned = state.projects.filter(p => p.status === 'planned');
+    return `<div class="card">${head}${planned.length
+      ? `<p class="muted">Nothing in progress. Up next:</p>${planned.slice(0, 3).map(p => `<button class="home-project" data-action="project-open" data-id="${esc(p.id)}">
+          <span>${esc(p.icon)} <b>${esc(p.title)}</b> ${taskLine(p)}</span>${budgetBar(p)}</button>`).join('')}`
+      : '<div class="empty-mini">No projects yet. <button class="link" data-action="project-new">Add one</button></div>'}</div>`;
+  }
+  return `<div class="card">${head}
     ${doing.slice(0, 3).map(p => `<button class="home-project" data-action="project-open" data-id="${esc(p.id)}">
       <span>${esc(p.icon)} <b>${esc(p.title)}</b> ${taskLine(p)}</span>${budgetBar(p)}</button>`).join('')}
     ${doing.length > 3 ? `<a class="more" href="#/projects">+${doing.length - 3} more</a>` : ''}</div>`;

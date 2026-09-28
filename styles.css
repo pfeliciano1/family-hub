@@ -1,4 +1,4 @@
-/* Family Hub — Alpha 0.8.1 */
+/* Family Hub — Alpha 0.8.2 */
 
 :root {
   --navy: #0b2447;
@@ -624,6 +624,30 @@ h3.who { display: flex; align-items: center; gap: 9px; }
 .people-pick .avatar { width: 24px; height: 24px; font-size: 10px; }
 .tv .memory-home-img { aspect-ratio: 16 / 9; }
 
+/* Home cards added in 0.8.2 */
+.home-list { display: block; padding: 8px 0; border-bottom: 1px solid var(--line-soft); text-decoration: none; color: inherit; font-size: 14px; }
+.home-list:last-of-type { border-bottom: 0; }
+.home-list > span { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.home-list > span small { color: var(--muted); font-size: 12px; margin-left: auto; }
+.home-list > small { display: block; margin-top: 2px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-recipe { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
+.home-recipe:last-of-type { border-bottom: 0; margin-bottom: 6px; }
+.home-recipe .link { font-weight: 600; text-align: left; flex: 1; min-width: 0; }
+.home-recipe small { white-space: nowrap; }
+.home-routines, .home-habits { flex: 1; min-width: 0; display: flex !important; flex-direction: column; gap: 6px; }
+.home-routine { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0 8px; text-decoration: none; color: inherit; font-size: 14px; }
+.home-routine .bar { grid-column: 1 / -1; height: 7px; margin: 3px 0 0; }
+.home-routine b { font-size: 13px; }
+.home-routine.ok b { color: var(--ok); }
+.home-habit { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.home-habit span { flex: 1; }
+.home-habit.on span { color: var(--muted); }
+.home-habit small { font-size: 12px; white-space: nowrap; }
+.tv .home-recipe .btn, .tv .dinner.idea .btn { display: none; }
+.quick-card .quick { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.quick-card .quick button { padding: 10px 4px; white-space: nowrap; }
+.tv .dinner.idea b { font-size: inherit; }
+
 @media (max-width: 1100px) {
   .sidebar { width: 220px; }
   .main { margin-left: 220px; }
@@ -677,6 +701,8 @@ h3.who { display: flex; align-items: center; gap: 9px; }
   .tv .main { padding: 12px; }
   .tv .grid { grid-template-columns: 1fr; }
   .footer { flex-direction: column; }
+  .quick-card .quick button { font-size: 12.5px; }
+  .home-recipe small { display: none; }
   .recipe-body { grid-template-columns: 1fr; }
   .recipe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .planner.all .plan-slots { grid-template-columns: 1fr; }

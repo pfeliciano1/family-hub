@@ -2,9 +2,9 @@
 // send its ingredients to the grocery list.
 import { sb } from '../supabase.js';
 import { state, update } from '../state.js';
-import { esc, openModal, closeModal, toast } from '../utils.js';
+import { esc, openModal, closeModal, toast, cardHead } from '../utils.js';
 import { run, refresh } from '../data.js';
-import { recipeById, lines, lastHadLabel, foodSetupNotice, openGroceryPicker } from './food.js';
+import { recipeById, lines, lastHadLabel, foodSetupNotice, openGroceryPicker, suggestions } from './food.js';
 import { iconPicker } from './kids.js';
 import { openPlanner } from './meals.js';
 
@@ -181,3 +181,20 @@ export const forms = {
     }
   },
 };
+
+// Home card: recipes you haven't made in a while
+export function homeCard() {
+  const head = cardHead('📖', 'Recipes', 'recipes');
+  if (state.foodMissing) return `<div class="card">${head}<div class="empty-mini">Run the Alpha 0.7 database update to turn on recipes.</div></div>`;
+  if (!state.recipes.length) {
+    return `<div class="card">${head}<div class="empty-mini">Save the family favorites. <button class="link" data-action="recipe-new">Add a recipe</button></div></div>`;
+  }
+  const ideas = suggestions(3);
+  return `<div class="card">${head}
+    <p class="muted">${ideas.length ? 'Haven\'t had these in a while:' : 'Every recipe is on this week\'s plan. 🎉'}</p>
+    ${ideas.map(r => `<div class="home-recipe">
+      <button class="link" data-action="recipe-open" data-id="${esc(r.id)}">${esc(r.icon)} ${esc(r.title)}</button>
+      <small class="muted">${esc(lastHadLabel(r.id))}</small>
+      <button class="btn sm" data-action="recipe-plan" data-id="${esc(r.id)}">Plan it</button></div>`).join('')}
+    <small class="muted">${state.recipes.length} recipe${state.recipes.length === 1 ? '' : 's'} in the cookbook</small></div>`;
+}

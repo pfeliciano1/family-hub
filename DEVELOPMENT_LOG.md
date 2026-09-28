@@ -174,6 +174,14 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - Database: adds `routines.reward_mode`. Run setup.sql again. Files: js/modules/routines.js, js/modules/shell.js (version), styles.css (version), database/setup.sql.
 - Tested: 4 of 6 = 4, unchecking one takes a star back, all 6 = 6, switching to finish-only corrects the total; script run twice; write test across every table passes; kids tests pass.
 
+## Alpha 0.8.2 — Home dashboard layout (2026-09-28)
+- Paul asked for a Home card for every section except Gifts, Quick Add near the top, and Routines and Habits as separate cards. He approved screenshots before the change.
+- New order: Today, Tasks, Quick Add; Dinner Tonight, Groceries, Lists; Rewards, Routines, Habits; Countdowns, Birthdays, Home Projects; Recipes, Memory, Weather; Family.
+- New cards: Lists (up to 3 lists with items left), Recipes (3 suggestions with "Plan it"), separate Routines (progress) and Habits (check off, streaks). Home Projects always shows, with an empty state. Quick Add gains "+ List" and is hidden in TV mode.
+- Same layout on every device (phone stacks the cards in the same order). No database change.
+- Files: js/modules/home.js, habits.js, lists.js, recipes.js, projects.js, shell.js (version), styles.css.
+- Tested: lint, kids/food/life browser tests, computer/phone/TV screenshots, no errors.
+
 ---
 
 ## Next Development Priorities
@@ -246,3 +254,4 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - **0.7** — Food: weekly meal plan, Dinner Tonight, recipes, recipe-to-grocery, meal history and suggestions, custom lists
 - **0.8** — Family life: gifts (hidden from the recipient), home projects with budgets, family memories with photos
 - **0.8.1** — Routine stars per step
+- **0.8.2** — Home dashboard: a card for every section except Gifts, Quick Add at the top
