@@ -39,7 +39,12 @@ export const state = {
   memories: [],
   projectId: null,     // Home Projects: the project being viewed
   giftShowGiven: false,
-  memoryPerson: '',    // Memories page filter
+  memoryPerson: '',
+  // Home layout (0.8.3)
+  homeLayout: null,    // { order: [card ids], hidden: [card ids] } or null for the default
+  layoutMissing: false, // true until the 0.8.3 database script is run (layout kept on this device)
+  layoutChangedAt: 0,
+  homeEdit: false,     // Home: customizing cards    // Memories page filter
   mealWeek: null,      // the Sunday the meal planner is showing (YYYY-MM-DD)
   recipeTag: '',       // Recipes page filter
   recipeQuery: '',

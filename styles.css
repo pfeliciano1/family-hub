@@ -1,4 +1,4 @@
-/* Family Hub — Alpha 0.8.2 */
+/* Family Hub — Alpha 0.8.3 */
 
 :root {
   --navy: #0b2447;
@@ -623,6 +623,41 @@ h3.who { display: flex; align-items: center; gap: 9px; }
 .people-pick .check span { display: inline-flex; align-items: center; gap: 6px; }
 .people-pick .avatar { width: 24px; height: 24px; font-size: 10px; }
 .tv .memory-home-img { aspect-ratio: 16 / 9; }
+
+/* Customize Home (0.8.3) */
+.home-tools { display: flex; justify-content: flex-end; margin: 8px 2px -6px; }
+.home-tools .link { font-size: 13px; font-weight: 600; }
+.edit-bar { position: sticky; top: 8px; z-index: 5; margin-top: 14px; background: var(--card, #fff); border: 2px solid var(--blue); border-radius: 14px; padding: 12px 14px; box-shadow: 0 6px 18px rgba(20, 50, 90, .12); }
+.edit-bar-top { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+.edit-bar-top span { display: block; color: var(--text-2); font-size: 13px; margin-top: 2px; }
+.edit-bar-btns { display: flex; gap: 8px; flex-shrink: 0; }
+.tray { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line, #e3e8ef); font-size: 13px; }
+.tray small { color: var(--text-2); font-weight: 600; margin-right: 4px; }
+.chip-add { border: 1px dashed var(--blue); background: #f3f8fe; color: var(--blue); border-radius: 999px; padding: 5px 11px; font-size: 13px; font-weight: 600; }
+.chip-add:hover { background: #e4f0fc; }
+.grid.editing { align-items: start; }
+.card-slot { display: flex; flex-direction: column; border-radius: 13px; outline: 2px dashed #b9d3ef; outline-offset: 3px; }
+.card-slot.dragging { position: relative; z-index: 20; pointer-events: none; opacity: 1; background: #f4f8fd; box-shadow: 0 14px 34px rgba(20, 50, 90, .3); border-radius: 13px; }
+.card-slot.dragging .slot-card { opacity: 1; }
+body.home-dragging { user-select: none; -webkit-user-select: none; cursor: grabbing; }
+.card-slot.drop { outline: 3px solid var(--blue); }
+.slot-bar { display: flex; align-items: center; gap: 4px; padding: 4px 6px 8px; font-size: 13px; cursor: grab; touch-action: none; }
+.slot-bar b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slot-bar .grip { color: var(--text-2); font-size: 16px; }
+.slot-bar .icon-btn { opacity: 1; background: #eef4fb; font-size: 15px; padding: 5px 10px; }
+.slot-bar .icon-btn:disabled { opacity: .3; }
+.slot-card { pointer-events: none; opacity: .85; } /* look, don't touch, while arranging */
+.slot-card .card { margin: 0; }
+.narrow-only { display: none; }
+.edit-foot { display: flex; justify-content: center; margin-top: 14px; }
+.edit-foot .btn { min-width: 160px; }
+@media (max-width: 760px) {
+  .wide-only { display: none; }
+  .narrow-only { display: inline; }
+  .edit-bar { position: static; }
+  .edit-bar-top { flex-direction: column; align-items: stretch; }
+  .edit-bar-btns .btn { flex: 1; }
+}
 
 /* Home cards added in 0.8.2 */
 .home-list { display: block; padding: 8px 0; border-bottom: 1px solid var(--line-soft); text-decoration: none; color: inherit; font-size: 14px; }

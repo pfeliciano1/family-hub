@@ -182,6 +182,15 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - Files: js/modules/home.js, habits.js, lists.js, recipes.js, projects.js, shell.js (version), styles.css.
 - Tested: lint, kids/food/life browser tests, computer/phone/TV screenshots, no errors.
 
+## Alpha 0.8.3 — Customize Home (2026-09-28)
+- Paul asked to move, remove and add Home cards. He chose a layout per person (his and his wife's are separate), and approved screenshots first.
+- "✏️ Customize Home" (above the cards) opens an edit mode: drag a card by its bar with a mouse or a finger (the page scrolls when a card is held near the edge), or use the arrows; Hide takes a card off, the Hidden cards tray puts it back; Reset to default. Swiping on a card still scrolls.
+- Saved in the new `home_layouts` table, one row per person, readable and writable only by that person. It follows the login to every device. TV mode uses the signed-in person's layout and hides the Customize button. Kid mode doesn't use Home.
+- Until setup.sql is re-run, the layout is kept on that device only (the edit bar says so).
+- Cards added in future versions slot in after the card they follow by default, so a saved layout never loses them.
+- Database: adds `home_layouts`. Run setup.sql again. Files: js/modules/home.js, js/data.js, js/state.js, js/session.js, js/modules/shell.js (version), styles.css, database/setup.sql.
+- Tested: script run twice; write test across every table passes; nobody can read or change another person's layout, other families and signed-out visitors see nothing; mouse drag, finger drag, arrows, hide, show, reset, no-database-update mode; earlier test suites pass.
+
 ---
 
 ## Next Development Priorities
@@ -255,3 +264,4 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - **0.8** — Family life: gifts (hidden from the recipient), home projects with budgets, family memories with photos
 - **0.8.1** — Routine stars per step
 - **0.8.2** — Home dashboard: a card for every section except Gifts, Quick Add at the top
+- **0.8.3** — Customize Home: drag, hide and add back cards, saved per person

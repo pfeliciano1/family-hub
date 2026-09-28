@@ -12,6 +12,7 @@ const EMPTY = {
   routines: [], steps: [], checks: [], habits: [], habitLogs: [],
   foodMissing: false, recipes: [], meals: [], lists: [], listItems: [],
   lifeMissing: false, gifts: [], projects: [], projectTasks: [], projectExpenses: [], memories: [], projectId: null,
+  homeLayout: null, layoutMissing: false, homeEdit: false,
   weather: null, locResults: [], live: false,
 };
 

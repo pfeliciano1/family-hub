@@ -73,6 +73,7 @@ async function fetchKey(key) {
     if (error) throw error;
     return data;
   }
+  if (key === 'homeLayout') return fetchHomeLayout();
   if (key === 'balances') {
     const { data, error } = await sb.rpc('points_balances');
     if (error) return kidsMissing();
@@ -101,6 +102,18 @@ async function fetchKey(key) {
   return data;
 }
 
+// Home layout (0.8.3): each person's own card order and hidden cards.
+// Until the database script is run, it's kept on this device instead.
+async function fetchHomeLayout() {
+  const { data, error } = await sb.from('home_layouts').select('layout').eq('member_id', state.me.id).maybeSingle();
+  if (error) {
+    state.layoutMissing = true;
+    try { return JSON.parse(localStorage.getItem('familyHub.homeLayout')); } catch { return null; }
+  }
+  state.layoutMissing = false;
+  return data?.layout || null;
+}
+
 function kidsMissing() {
   state.kidsMissing = true;
   return [];
@@ -108,12 +121,13 @@ function kidsMissing() {
 
 export async function loadAll() {
   const keys = ['family', 'members', 'countdowns', 'tasks', 'grocery', 'calendars',
-    ...[...KIDS_KEYS], ...[...FOOD_KEYS], ...[...LIFE_KEYS]];
+    ...[...KIDS_KEYS], ...[...FOOD_KEYS], ...[...LIFE_KEYS], 'homeLayout'];
   const results = await Promise.all(keys.map(fetchKey));
   const patch = {};
   keys.forEach((k, i) => { patch[k] = results[i]; });
   const me = patch.members.find(m => m.user_id === state.user.id);
   if (me) patch.me = me;
+  if (Date.now() - state.layoutChangedAt < 5000) delete patch.homeLayout; // don't undo a change still saving
   update(patch);
 }
 

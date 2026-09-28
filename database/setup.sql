@@ -1,5 +1,5 @@
 -- =====================================================================
--- Family Hub — Alpha 0.8.1 database setup
+-- Family Hub — Alpha 0.8.3 database setup
 --
 -- How to run: Supabase dashboard → SQL Editor → New query →
 -- paste this whole file → Run.
@@ -458,6 +458,17 @@ as $$
   group by member_id;
 $$;
 
+-- ---------------------------------------------------------------------
+-- 3e. Home layout (Alpha 0.8.3): each person's own card order
+-- ---------------------------------------------------------------------
+
+create table if not exists public.home_layouts (
+  member_id  uuid primary key references public.family_members(id) on delete cascade,
+  family_id  uuid not null references public.families(id) on delete cascade,
+  layout     jsonb not null default '{}'::jsonb,   -- { "order": [card ids], "hidden": [card ids] }
+  updated_at timestamptz not null default now()
+);
+
 
 -- ---------------------------------------------------------------------
 -- 4. Onboarding: create a family, or join one with an invite code
@@ -567,6 +578,7 @@ alter table public.projects          enable row level security;
 alter table public.project_tasks     enable row level security;
 alter table public.project_expenses  enable row level security;
 alter table public.memories          enable row level security;
+alter table public.home_layouts      enable row level security;
 
 -- families
 drop policy if exists "Members can view their family" on public.families;
@@ -658,6 +670,13 @@ create policy "Family can manage gifts" on public.gifts
     and (recipient_id is distinct from public.my_member_id() or created_by = public.my_member_id())
   )
   with check (family_id = public.my_family_id());
+
+-- Home layout (0.8.3): only your own, nobody else's
+drop policy if exists "Members manage their own home layout" on public.home_layouts;
+create policy "Members manage their own home layout" on public.home_layouts
+  for all to authenticated
+  using (member_id = public.my_member_id() and family_id = public.my_family_id())
+  with check (member_id = public.my_member_id() and family_id = public.my_family_id());
 
 -- Family photos (0.8): each family can only reach its own folder.
 do $$
@@ -754,7 +773,7 @@ revoke all on public.families, public.family_members, public.countdowns,
               public.habits, public.habit_logs,
               public.recipes, public.meal_plan, public.lists, public.list_items,
               public.gifts, public.projects, public.project_tasks, public.project_expenses,
-              public.memories from anon;
+              public.memories, public.home_layouts from anon;
 
 grant select on public.families to authenticated;
 grant update (name, location_name, latitude, longitude, temp_unit, parent_pin_hash)
@@ -775,7 +794,7 @@ grant select, insert, update, delete
      public.habits, public.habit_logs,
      public.recipes, public.meal_plan, public.lists, public.list_items,
      public.gifts, public.projects, public.project_tasks, public.project_expenses,
-     public.memories to authenticated;
+     public.memories, public.home_layouts to authenticated;
 
 revoke all on function public.my_family_id()              from public, anon;
 revoke all on function public.i_am_parent()               from public, anon;
