@@ -13,10 +13,10 @@ export const NAV = [
   { id: 'habits',     icon: '❤️', label: 'Habits' },
   { id: 'countdowns', icon: '⏳', label: 'Countdowns' },
   { id: 'birthdays',  icon: '🎂', label: 'Birthdays & Anniversaries', short: 'Birthdays' },
-  { id: 'gifts',      icon: '🎁', label: 'Gifts', soon: 'Alpha 0.8' },
+  { id: 'gifts',      icon: '🎁', label: 'Gifts' },
   { id: 'weather',    icon: '🌤️', label: 'Weather' },
-  { id: 'projects',   icon: '🔨', label: 'Home Projects', soon: 'Alpha 0.8' },
-  { id: 'memories',   icon: '📸', label: 'Family Memories', soon: 'Alpha 0.8' },
+  { id: 'projects',   icon: '🔨', label: 'Home Projects', short: 'Projects' },
+  { id: 'memories',   icon: '📸', label: 'Family Memories', short: 'Memories' },
   { id: 'assistant',  icon: '🤖', label: 'Family Assistant', soon: 'Alpha 0.9' },
 ];
 

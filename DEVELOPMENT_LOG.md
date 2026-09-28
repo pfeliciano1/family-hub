@@ -116,7 +116,7 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 ---
 
 ## Alpha 0.7 — Food
-**Status:** Current (built 2026-09-26; needs the database script run again)
+**Status:** Delivered 2026-09-26 (its database changes are included in the 0.8 script)
 
 ### Built
 - **Meals page:** a Sunday-to-Saturday planner with week arrows. Dinner always shows; a "Breakfast & lunch" checkbox (remembered per device) adds the other two. Each meal is a recipe or just a name ("Leftovers", "Pizza night"), with an optional note.
@@ -140,12 +140,34 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 
 ---
 
+## Alpha 0.8 — Family Life
+**Status:** Current (built 2026-09-28; needs the database script run again)
+
+### Built
+- **Gifts:** ideas and purchases for family members or anyone else ("Grandma"), with occasion and date, price, link, note, and a status of Idea, Bought, Wrapped, or Given. Grouped by person with ideas and money spent. "Coming up" lists birthdays, anniversaries, and gift dates in the next 60 days with how many gifts are ready and a one-tap ＋ Gift (the person and date fill in). Given gifts hide until you ask for them.
+- **Home Projects:** stages (In progress, Planned, Someday, Done), who's leading it, a finish-by date (late ones turn red), steps, a budget, and an expense log with a spent/left bar that turns red when over. Steps can be typed all at once when creating a project. Home shows projects in progress.
+- **Family Memories:** a title, date, story, who was there, and one photo. Grouped by year and filterable by person. Home shows "On this day, 2 years ago" when a memory matches today's date, otherwise a different memory each day. Photos can be opened full size, replaced, removed, or downloaded.
+- Quick Add has ＋ Memory and ＋ Project.
+
+### Decisions
+- **Gift secrecy is enforced by the database,** not just hidden on screen: a gift for someone with their own login is invisible to them (and to their devices' live sync) unless they added it themselves, which makes it a wish list everyone can see. Kids without logins can see gifts on a shared device outside Kid mode; the gift form says so.
+- **Gifts never appear on Home,** since Home may be on the TV.
+- **Photos stay private.** They're stored in a private Supabase Storage bucket, one folder per family, and shown through links that expire after an hour. Each photo is shrunk to 1600 px on the device before upload (about 300 KB), so the free 1 GB holds thousands. Deleting a memory or replacing its photo deletes the old file.
+- One photo per memory keeps the page simple; albums can come later.
+- Money is shown in US dollars.
+
+### Testing
+- Database script run on top of the 0.7 test database, then again: data kept. Tested with two logins in one family plus an outsider: a gift for Ana is invisible to Ana and she can't change or delete it; gifts for kids, for yourself, and for people outside the family are visible to the family; outsiders see nothing; another family can't link a gift, project step, or photo to yours; negative amounts rejected; photos can only be saved in your own family's folder; signed-out access denied.
+- Headless browser: every gift, project, and memory flow above, photo upload with preview, replace and remove (storage cleaned up), missing photos (placeholder, no endless retries), the no-database-update state, and phone layouts. The 0.6 kids and 0.7 food tests still pass. No errors.
+- Not yet tested against Paul's live Supabase project.
+
+---
+
 ## Next Development Priorities
 
-### Alpha 0.8 — Family Life
-15. Gift tracker
-16. Home projects with budget
-17. Family memories
+### Notifications (requested 2026-09-28, next up)
+- Real push notifications on phones and computers, free (Web Push with a service worker, a Supabase server function, and a schedule). iPhone/iPad need the app added to the Home Screen and iOS 16.4+.
+- First set: a chore or reward waiting for a parent's OK, a morning summary (tasks, events, dinner), the day before a birthday or countdown, and new shared list or grocery items. Each person turns each one on or off per device.
 
 ### Alpha 0.9+ — Smart Features
 18. Natural-language Quick Add
@@ -183,6 +205,10 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 | FEAT-004 | Feature | Done (0.6) | Tasks, chores with points, and rewards |
 | FEAT-005 | Feature | Done (0.7) | Grocery list, meal planner, recipes, recipe-to-grocery, meal history |
 | FEAT-011 | Feature | Done (0.7) | Custom shared lists with templates |
+| FEAT-012 | Feature | Done (0.8) | Gift tracker hidden from the recipient |
+| FEAT-013 | Feature | Done (0.8) | Home projects with steps and budget |
+| FEAT-014 | Feature | Done (0.8) | Family memories with private photos and "On this day" |
+| FEAT-015 | Feature | Planned | Push notifications |
 | FEAT-006 | Feature | Done (0.5) | Weather and clothing engine, with activity-aware tips |
 | FEAT-007 | Feature | Partial (0.4) | TV mode wake lock, full screen, large text; auto-rotation later |
 | FEAT-008 | Feature | Planned | Family Assistant / natural-language Quick Add |
@@ -203,3 +229,4 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - **0.6** — Kids: chores with points and approvals, rewards and goals, routines, habits with streaks, Kid mode with PINs
 - **0.6.1** — Calendar freeze fix; iPhone/iPad home screen tip
 - **0.7** — Food: weekly meal plan, Dinner Tonight, recipes, recipe-to-grocery, meal history and suggestions, custom lists
+- **0.8** — Family life: gifts (hidden from the recipient), home projects with budgets, family memories with photos

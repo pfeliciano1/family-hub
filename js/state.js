@@ -30,6 +30,16 @@ export const state = {
   meals: [],           // meal plan, last 180 days and ahead
   lists: [],
   listItems: [],
+  // Family life (0.8)
+  lifeMissing: false,  // true until the 0.8 database script is run
+  gifts: [],           // gifts for you are hidden from you by the database
+  projects: [],
+  projectTasks: [],
+  projectExpenses: [],
+  memories: [],
+  projectId: null,     // Home Projects: the project being viewed
+  giftShowGiven: false,
+  memoryPerson: '',    // Memories page filter
   mealWeek: null,      // the Sunday the meal planner is showing (YYYY-MM-DD)
   recipeTag: '',       // Recipes page filter
   recipeQuery: '',

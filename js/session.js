@@ -11,6 +11,7 @@ const EMPTY = {
   kidsMissing: false, rewards: [], chores: [], completions: [], claims: [], points: [], balances: {},
   routines: [], steps: [], checks: [], habits: [], habitLogs: [],
   foodMissing: false, recipes: [], meals: [], lists: [], listItems: [],
+  lifeMissing: false, gifts: [], projects: [], projectTasks: [], projectExpenses: [], memories: [], projectId: null,
   weather: null, locResults: [], live: false,
 };
 

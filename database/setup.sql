@@ -1,5 +1,5 @@
 -- =====================================================================
--- Family Hub — Alpha 0.7 database setup
+-- Family Hub — Alpha 0.8 database setup
 --
 -- How to run: Supabase dashboard → SQL Editor → New query →
 -- paste this whole file → Run.
@@ -61,6 +61,14 @@ returns uuid
 language sql stable security definer set search_path = public
 as $$
   select family_id from public.family_members where user_id = auth.uid() limit 1;
+$$;
+
+-- The signed-in person's own family_members row id.
+create or replace function public.my_member_id()
+returns uuid
+language sql stable security definer set search_path = public
+as $$
+  select id from public.family_members where user_id = auth.uid() limit 1;
 $$;
 
 -- Whether the signed-in person is a parent.
@@ -340,6 +348,98 @@ create table if not exists public.list_items (
 );
 create index if not exists list_items_family_idx on public.list_items (family_id);
 
+-- ---------------------------------------------------------------------
+-- 3d. Family life (Alpha 0.8): gifts, home projects, memories
+-- ---------------------------------------------------------------------
+
+-- Gift ideas and purchases. A gift for someone in the family who has a
+-- login is hidden from them (see the security rules below), unless they
+-- added it themselves.
+create table if not exists public.gifts (
+  id             uuid primary key default gen_random_uuid(),
+  family_id      uuid not null default public.my_family_id()
+                 references public.families(id) on delete cascade,
+  recipient_id   uuid references public.family_members(id) on delete cascade,
+  recipient_name text,                      -- for people outside the family
+  occasion       text,                      -- e.g. "Christmas", "Ana's birthday"
+  occasion_date  date,
+  title          text not null check (length(trim(title)) > 0),
+  url            text check (url is null or url ~* '^https?://'),
+  price          numeric(10, 2) check (price is null or price >= 0),
+  status         text not null default 'idea' check (status in ('idea', 'bought', 'wrapped', 'given')),
+  note           text,
+  created_by     uuid default public.my_member_id() references public.family_members(id) on delete set null,
+  created_at     timestamptz not null default now(),
+  check (recipient_id is not null or length(trim(coalesce(recipient_name, ''))) > 0)
+);
+create index if not exists gifts_family_idx on public.gifts (family_id);
+
+create table if not exists public.projects (
+  id          uuid primary key default gen_random_uuid(),
+  family_id   uuid not null default public.my_family_id()
+              references public.families(id) on delete cascade,
+  title       text not null check (length(trim(title)) > 0),
+  icon        text not null default '🔨',
+  status      text not null default 'planned' check (status in ('idea', 'planned', 'doing', 'done')),
+  budget      numeric(10, 2) check (budget is null or budget >= 0),
+  target_date date,
+  owner_id    uuid references public.family_members(id) on delete set null,
+  note        text,
+  done_at     timestamptz,
+  created_at  timestamptz not null default now()
+);
+create index if not exists projects_family_idx on public.projects (family_id);
+
+create table if not exists public.project_tasks (
+  id         uuid primary key default gen_random_uuid(),
+  family_id  uuid not null default public.my_family_id()
+             references public.families(id) on delete cascade,
+  project_id uuid not null references public.projects(id) on delete cascade,
+  title      text not null check (length(trim(title)) > 0),
+  is_done    boolean not null default false,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists project_tasks_family_idx on public.project_tasks (family_id);
+
+create table if not exists public.project_expenses (
+  id         uuid primary key default gen_random_uuid(),
+  family_id  uuid not null default public.my_family_id()
+             references public.families(id) on delete cascade,
+  project_id uuid not null references public.projects(id) on delete cascade,
+  title      text not null check (length(trim(title)) > 0),
+  amount     numeric(10, 2) not null check (amount >= 0),
+  spent_on   date not null default current_date,
+  created_at timestamptz not null default now()
+);
+create index if not exists project_expenses_family_idx on public.project_expenses (family_id);
+
+-- A memory: a date, a story, and optionally one photo. Photos are stored
+-- in the private "family-photos" storage bucket, in a folder named after
+-- the family.
+create table if not exists public.memories (
+  id          uuid primary key default gen_random_uuid(),
+  family_id   uuid not null default public.my_family_id()
+              references public.families(id) on delete cascade,
+  title       text not null check (length(trim(title)) > 0),
+  happened_on date not null default current_date,
+  story       text,
+  photo_path  text,
+  people      uuid[] not null default '{}',
+  created_by  uuid default public.my_member_id() references public.family_members(id) on delete set null,
+  created_at  timestamptz not null default now(),
+  check (photo_path is null or photo_path like (family_id::text || '/%'))
+);
+create index if not exists memories_family_idx on public.memories (family_id, happened_on);
+
+-- Private photo storage: 5 MB per photo, images only.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('family-photos', 'family-photos', false, 5242880,
+        array['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+on conflict (id) do update
+  set public = false, file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
 -- Everyone's point balance in one call (a long history can exceed the
 -- number of rows the app loads at once).
 create or replace function public.points_balances()
@@ -458,6 +558,11 @@ alter table public.recipes           enable row level security;
 alter table public.meal_plan         enable row level security;
 alter table public.lists             enable row level security;
 alter table public.list_items        enable row level security;
+alter table public.gifts             enable row level security;
+alter table public.projects          enable row level security;
+alter table public.project_tasks     enable row level security;
+alter table public.project_expenses  enable row level security;
+alter table public.memories          enable row level security;
 
 -- families
 drop policy if exists "Members can view their family" on public.families;
@@ -529,11 +634,43 @@ declare
 begin
   foreach t in array array['rewards', 'chores', 'chore_completions', 'reward_claims', 'point_entries',
                            'routines', 'routine_steps', 'routine_checks', 'habits', 'habit_logs',
-                           'recipes', 'meal_plan', 'lists', 'list_items'] loop
+                           'recipes', 'meal_plan', 'lists', 'list_items',
+                           'projects', 'project_tasks', 'project_expenses', 'memories'] loop
     execute format('drop policy if exists "Family can manage %s" on public.%I', t, t);
     execute format('create policy "Family can manage %s" on public.%I for all to authenticated
                     using (family_id = public.my_family_id())
                     with check (family_id = public.my_family_id())', t, t);
+  end loop;
+end;
+$$;
+
+-- Gifts (0.8): same family, but a gift for you stays hidden from you
+-- unless you added it yourself.
+drop policy if exists "Family can manage gifts" on public.gifts;
+create policy "Family can manage gifts" on public.gifts
+  for all to authenticated
+  using (
+    family_id = public.my_family_id()
+    and (recipient_id is distinct from public.my_member_id() or created_by = public.my_member_id())
+  )
+  with check (family_id = public.my_family_id());
+
+-- Family photos (0.8): each family can only reach its own folder.
+do $$
+declare
+  op text;
+begin
+  foreach op in array array['select', 'insert', 'update', 'delete'] loop
+    execute format('drop policy if exists "Family photos %s" on storage.objects', op);
+    if op = 'insert' then
+      execute format('create policy "Family photos %s" on storage.objects for insert to authenticated
+                      with check (bucket_id = ''family-photos''
+                                  and (storage.foldername(name))[1] = public.my_family_id()::text)', op);
+    else
+      execute format('create policy "Family photos %s" on storage.objects for %s to authenticated
+                      using (bucket_id = ''family-photos''
+                             and (storage.foldername(name))[1] = public.my_family_id()::text)', op, op);
+    end if;
   end loop;
 end;
 $$;
@@ -561,7 +698,11 @@ begin
       ('routine_steps',  'step_id'),
       ('habits',         'habit_id'),
       ('recipes',        'recipe_id'),
-      ('lists',          'list_id')
+      ('lists',          'list_id'),
+      ('family_members', 'recipient_id'),
+      ('family_members', 'owner_id'),
+      ('family_members', 'created_by'),
+      ('projects',       'project_id')
     ) as v(tbl, col)
     where row_json ->> v.col is not null
   loop
@@ -581,7 +722,8 @@ declare
 begin
   foreach t in array array['tasks', 'calendars', 'family_members', 'rewards', 'chores', 'chore_completions',
                            'reward_claims', 'point_entries', 'routines', 'routine_steps',
-                           'routine_checks', 'habits', 'habit_logs', 'meal_plan', 'list_items'] loop
+                           'routine_checks', 'habits', 'habit_logs', 'meal_plan', 'list_items',
+                           'gifts', 'projects', 'project_tasks', 'project_expenses', 'memories'] loop
     execute format('drop trigger if exists same_family on public.%I', t);
     execute format('create trigger same_family before insert or update on public.%I
                     for each row execute function public.same_family_check()', t);
@@ -603,7 +745,9 @@ revoke all on public.families, public.family_members, public.countdowns,
               public.rewards, public.chores, public.chore_completions, public.reward_claims,
               public.point_entries, public.routines, public.routine_steps, public.routine_checks,
               public.habits, public.habit_logs,
-              public.recipes, public.meal_plan, public.lists, public.list_items from anon;
+              public.recipes, public.meal_plan, public.lists, public.list_items,
+              public.gifts, public.projects, public.project_tasks, public.project_expenses,
+              public.memories from anon;
 
 grant select on public.families to authenticated;
 grant update (name, location_name, latitude, longitude, temp_unit, parent_pin_hash)
@@ -622,16 +766,20 @@ grant select, insert, update, delete
      public.rewards, public.chores, public.chore_completions, public.reward_claims,
      public.point_entries, public.routines, public.routine_steps, public.routine_checks,
      public.habits, public.habit_logs,
-     public.recipes, public.meal_plan, public.lists, public.list_items to authenticated;
+     public.recipes, public.meal_plan, public.lists, public.list_items,
+     public.gifts, public.projects, public.project_tasks, public.project_expenses,
+     public.memories to authenticated;
 
 revoke all on function public.my_family_id()              from public, anon;
 revoke all on function public.i_am_parent()               from public, anon;
+revoke all on function public.my_member_id()              from public, anon;
 revoke all on function public.create_family(text, text)   from public, anon;
 revoke all on function public.join_family(text, text)     from public, anon;
 revoke all on function public.points_balances()           from public, anon;
 revoke all on function public.same_family_check()         from public, anon;
 grant execute on function public.my_family_id()            to authenticated;
 grant execute on function public.i_am_parent()             to authenticated;
+grant execute on function public.my_member_id()            to authenticated;
 grant execute on function public.create_family(text, text) to authenticated;
 grant execute on function public.join_family(text, text)   to authenticated;
 grant execute on function public.points_balances()         to authenticated;
@@ -648,7 +796,8 @@ begin
   foreach t in array array['families', 'family_members', 'countdowns', 'tasks', 'grocery_items', 'calendars',
                            'rewards', 'chores', 'chore_completions', 'reward_claims', 'point_entries',
                            'routines', 'routine_steps', 'routine_checks', 'habits', 'habit_logs',
-                           'recipes', 'meal_plan', 'lists', 'list_items'] loop
+                           'recipes', 'meal_plan', 'lists', 'list_items',
+                           'gifts', 'projects', 'project_tasks', 'project_expenses', 'memories'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

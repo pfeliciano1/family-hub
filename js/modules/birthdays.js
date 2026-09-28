@@ -14,7 +14,7 @@ export function upcomingSpecialDays() {
     const next = nextOccurrence(m.birthday, true);
     const born = parseDate(m.birthday).getFullYear();
     out.push({
-      icon: '🎂', title: `${m.display_name}'s birthday`, next,
+      icon: '🎂', title: `${m.display_name}'s birthday`, next, memberId: m.id,
       days: daysBetween(today, next),
       sub: born > 1900 ? `Turns ${next.getFullYear() - born}` : '',
     });
@@ -50,5 +50,5 @@ export function view() {
       : `<div class="empty"><div class="empty-icon">🎂</div>
           <p>Add birthdays to family member profiles in Settings, or add anniversaries and other people's birthdays as countdowns.</p>
           <a class="btn primary" href="#/settings">Open Settings</a></div>`}</div>
-    <p class="muted small">Tip: family members' birthdays come from their profiles. For grandparents, friends, or your anniversary, add a countdown with the type set to Birthday or Anniversary and turn on "Repeats every year." Gift ideas arrive in Alpha 0.8.</p>`;
+    <p class="muted small">Tip: family members' birthdays come from their profiles. For grandparents, friends, or your anniversary, add a countdown with the type set to Birthday or Anniversary and turn on "Repeats every year." Keep track of presents on the <a href="#/gifts">Gifts</a> page.</p>`;
 }

@@ -127,3 +127,27 @@ export function closeModal() {
 export function modalIsOpen() {
   return document.getElementById('modal-root').children.length > 0;
 }
+
+// ---------- Money ----------
+
+const MONEY = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' });
+const MONEY_WHOLE = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+// $1,234.50 (or $1,235 when whole = true)
+export function money(n, whole = false) {
+  const v = Number(n) || 0;
+  return (whole ? MONEY_WHOLE : MONEY).format(v);
+}
+
+// "12.50" or "$12.50" typed in a form → 12.5, or null when empty
+export function parseMoney(s) {
+  const v = parseFloat(String(s ?? '').replace(/[$,\s]/g, ''));
+  return Number.isFinite(v) && v >= 0 ? Math.round(v * 100) / 100 : null;
+}
+
+// Shown in place of a section until the database script for it is run.
+export function setupNotice(what) {
+  return `<div class="panel empty"><div class="empty-icon">🛠️</div>
+    <h3>One database update first</h3>
+    <p>Run <code>database/setup.sql</code> again in Supabase's SQL Editor to turn on ${esc(what)}. Your existing data stays put.</p></div>`;
+}

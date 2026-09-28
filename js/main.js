@@ -22,11 +22,14 @@ import * as food from './modules/food.js';
 import * as recipes from './modules/recipes.js';
 import * as meals from './modules/meals.js';
 import * as lists from './modules/lists.js';
+import * as gifts from './modules/gifts.js';
+import * as projects from './modules/projects.js';
+import * as memories from './modules/memories.js';
 import * as home from './modules/home.js';
 
 // Each module contributes its own buttons (actions), forms, and checkboxes (toggles).
 const modules = [auth, shell, countdowns, tasks, grocery, settings, weather, calendar,
-  chores, rewards, routines, habits, kidmode, food, recipes, meals, lists, home];
+  chores, rewards, routines, habits, kidmode, food, recipes, meals, lists, gifts, projects, memories, home];
 const actions = {
   'close-modal': () => closeModal(),
   'close-modal-backdrop': () => closeModal(),
@@ -128,7 +131,8 @@ function viewFromHash() {
 }
 
 window.addEventListener('hashchange', () => {
-  update({ view: viewFromHash() });
+  const view = viewFromHash();
+  update(view === 'projects' ? { view } : { view, projectId: null });
   window.scrollTo(0, 0);
   calendar.loadEvents();
 });

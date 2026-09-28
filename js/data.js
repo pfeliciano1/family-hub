@@ -28,8 +28,15 @@ const SOURCES = {
   meals:       ['meal_plan',         q => q.gte('plan_date', daysAgo(180)).order('plan_date')],
   lists:       ['lists',             q => q.order('created_at')],
   listItems:   ['list_items',        q => q.order('sort_order').order('created_at')],
+  // Family life (0.8)
+  gifts:           ['gifts',            q => q.order('created_at')],
+  projects:        ['projects',         q => q.order('created_at')],
+  projectTasks:    ['project_tasks',    q => q.order('sort_order').order('created_at')],
+  projectExpenses: ['project_expenses', q => q.order('spent_on').order('created_at')],
+  memories:        ['memories',         q => q.order('happened_on', { ascending: false }).order('created_at', { ascending: false })],
 };
 const FOOD_KEYS = new Set(['recipes', 'meals', 'lists', 'listItems']);
+const LIFE_KEYS = new Set(['gifts', 'projects', 'projectTasks', 'projectExpenses', 'memories']);
 const KIDS_KEYS = new Set(['rewards', 'chores', 'completions', 'claims', 'points', 'balances',
   'routines', 'steps', 'checks', 'habits', 'habitLogs']);
 
@@ -45,8 +52,11 @@ const TABLE_TO_KEY = {
   point_entries: ['points', 'balances'], routines: 'routines', routine_steps: 'steps',
   routine_checks: 'checks', habits: 'habits', habit_logs: 'habitLogs',
   recipes: 'recipes', meal_plan: 'meals', lists: 'lists', list_items: 'listItems',
+  gifts: 'gifts', projects: 'projects', project_tasks: 'projectTasks', project_expenses: 'projectExpenses',
+  memories: 'memories',
 };
 const FOOD_TABLES = new Set(['recipes', 'meal_plan', 'lists', 'list_items']);
+const LIFE_TABLES = new Set(['gifts', 'projects', 'project_tasks', 'project_expenses', 'memories']);
 const KIDS_TABLES = new Set(['rewards', 'chores', 'chore_completions', 'reward_claims', 'point_entries',
   'routines', 'routine_steps', 'routine_checks', 'habits', 'habit_logs']);
 
@@ -81,9 +91,11 @@ async function fetchKey(key) {
     }
     if (KIDS_KEYS.has(key)) return kidsMissing(); // same for the 0.6 kids tables
     if (FOOD_KEYS.has(key)) { state.foodMissing = true; return []; } // and the 0.7 food tables
+    if (LIFE_KEYS.has(key)) { state.lifeMissing = true; return []; } // and the 0.8 family life tables
     throw error;
   }
   if (FOOD_KEYS.has(key)) state.foodMissing = false;
+  if (LIFE_KEYS.has(key)) state.lifeMissing = false;
   if (key === 'calendars') state.calendarsMissing = false;
   if (KIDS_KEYS.has(key)) state.kidsMissing = false;
   return data;
@@ -96,7 +108,7 @@ function kidsMissing() {
 
 export async function loadAll() {
   const keys = ['family', 'members', 'countdowns', 'tasks', 'grocery', 'calendars',
-    ...[...KIDS_KEYS], ...[...FOOD_KEYS]];
+    ...[...KIDS_KEYS], ...[...FOOD_KEYS], ...[...LIFE_KEYS]];
   const results = await Promise.all(keys.map(fetchKey));
   const patch = {};
   keys.forEach((k, i) => { patch[k] = results[i]; });
@@ -160,6 +172,7 @@ export function subscribe() {
     if (table === 'calendars' && state.calendarsMissing) continue; // 0.5 script not run yet
     if (KIDS_TABLES.has(table) && state.kidsMissing) continue;    // 0.6 script not run yet
     if (FOOD_TABLES.has(table) && state.foodMissing) continue;    // 0.7 script not run yet
+    if (LIFE_TABLES.has(table) && state.lifeMissing) continue;    // 0.8 script not run yet
     channel.on('postgres_changes', { event: '*', schema: 'public', table },
       () => scheduleRefresh(TABLE_TO_KEY[table]));
   }

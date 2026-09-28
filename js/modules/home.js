@@ -12,6 +12,8 @@ import { todayCard } from './calendar.js';
 import { homeCard as rewardsCard } from './rewards.js';
 import { homeCard as routinesCard } from './habits.js';
 import { homeCard as dinnerCard } from './meals.js';
+import { homeCard as projectsCard } from './projects.js';
+import { homeCard as memoryCard } from './memories.js';
 
 function countdownsCard() {
   const list = upcomingCountdowns().filter(c => c.show_on_dashboard).slice(0, 4);
@@ -69,6 +71,8 @@ function quickAddCard() {
       <button data-action="chore-new">＋ Chore</button>
       <button data-action="event-new">＋ Event</button>
       <button data-action="meal-new">＋ Meal</button>
+      <button data-action="memory-new">＋ Memory</button>
+      <button data-action="project-new">＋ Project</button>
     </div></div>`;
 }
 
@@ -112,6 +116,8 @@ export function view() {
       ${rewardsCard()}
       ${birthdaysCard()}
       ${routinesCard()}
+      ${memoryCard()}
+      ${projectsCard()}
       ${weatherCard()}
       ${quickAddCard()}
     </div>`;

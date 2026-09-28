@@ -1,10 +1,10 @@
-# Family Hub — Alpha 0.7
+# Family Hub — Alpha 0.8
 
 A private family command center: shared calendar, tasks, groceries, countdowns,
 weather, and more, on every device in the house. Runs at $0/month on
 GitHub Pages (hosting) and Supabase (database, logins, live sync).
 
-## What works in Alpha 0.7
+## What works in Alpha 0.8
 
 - Email + password accounts, password reset
 - Create a family, or join one with an invite code
@@ -37,7 +37,12 @@ GitHub Pages (hosting) and Supabase (database, logins, live sync).
   ingredients to the grocery list
 - Lists: shared checklists for packing, school supplies, ideas, anything
 
-Gifts, home projects, memories, and the rest are on the roadmap
+- Gifts: ideas and purchases by person and occasion, hidden from the person
+  they're for
+- Home projects with steps, a budget, and what you've spent
+- Family memories with photos, and "On this day" on Home
+
+Notifications and the rest are on the roadmap
 (see `DEVELOPMENT_LOG.md`).
 
 ## First-time setup
@@ -166,6 +171,29 @@ your data.
    recipe) shows a checklist; uncheck what you already have.
 4. **Lists → ＋ New list**, starting from a template or blank.
 
+## Setting up gifts, projects, and memories
+**A. Update the database.** In Supabase's **SQL Editor**, open a new query,
+paste all of `database/setup.sql`, and click **Run** (the "destructive
+operations" warning is expected). It adds the new tables and a private photo
+folder, and keeps your data. If you skipped the 0.7 update, this one covers it.
+Afterward, **Storage** in Supabase should list a bucket called
+`family-photos`.
+
+**B. Upload the new app files** to GitHub the usual way and hard refresh
+(Ctrl+Shift+R; on phones, close and reopen the app). The footer should say
+**Alpha 0.8**.
+
+**C. Try it:**
+1. **Gifts → ＋ New gift.** A gift for someone with their own login is hidden
+   from them, so you and your spouse can plan each other's presents here.
+2. **Home Projects → ＋ New project.** Type the steps one per line, set a
+   budget, then log purchases as you go.
+3. **Family Memories → ＋ Add a memory.** Pick a photo, say who was there,
+   and write a line or two.
+
+Photos are shrunk before upload, so Supabase's free storage (1 GB) holds
+thousands. They're private to your family.
+
 ## Updating later
 Upload the changed files to GitHub the same way. Your data lives in
 Supabase, so updating the app never touches it. If a new version includes a
@@ -199,7 +227,8 @@ js/session.js       sign-in / sign-out handling
 js/nav.js           list of sections (and which are coming soon)
 js/modules/         one file per section: home, calendar, tasks, chores,
                     rewards, routines, habits, kidmode, meals, recipes, lists,
-                    grocery, countdowns, birthdays, weather, settings, auth, shell
+                    gifts, projects, memories, grocery, countdowns, birthdays,
+                    weather, settings, auth, shell
                     (kids.js holds what chores/rewards/routines/habits share;
                     food.js holds meal history and recipe-to-grocery)
 database/setup.sql  tables, security rules, live sync
