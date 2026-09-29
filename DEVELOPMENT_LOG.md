@@ -191,13 +191,21 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - Database: adds `home_layouts`. Run setup.sql again. Files: js/modules/home.js, js/data.js, js/state.js, js/session.js, js/modules/shell.js (version), styles.css, database/setup.sql.
 - Tested: script run twice; write test across every table passes; nobody can read or change another person's layout, other families and signed-out visitors see nothing; mouse drag, finger drag, arrows, hide, show, reset, no-database-update mode; earlier test suites pass.
 
+## Alpha 0.8.4 — Find recipes (2026-09-29)
+- Paul didn't want to type recipes in. Recipes now has two tabs: My recipes and **Find new recipes**, which searches TheMealDB (free, open, no account or key, called straight from the browser).
+- Search by name, browse by category (Chicken, Beef, Pasta, Seafood, Pork, Vegetarian, Breakfast, Dessert, Sides), or "Surprise me" for random ideas. Each result opens a preview with photo, ingredients and steps.
+- **Save + grocery list** saves it to the cookbook (icon from the category, tags from category, cuisine and TheMealDB tags, link to the original) and opens the usual grocery picker. **Save recipe** saves only. Already-saved recipes are marked and open the family copy instead of saving twice.
+- Ingredient lines are written so the grocery list reads them: "320g spaghetti", "salt (to taste)". Some amounts are metric; that's how TheMealDB lists them.
+- No database change. Files: js/modules/findrecipes.js (new), recipes.js, main.js, state.js, shell.js (version), styles.css.
+- Tested in a headless browser against a fake TheMealDB (this workspace can't reach the real one): search, category, ideas, preview, both save buttons, duplicates, offline message, phone layout; earlier suites pass. Paul checks it live.
+
 ---
 
 ## Next Development Priorities
 
-### Notifications (requested 2026-09-28, next up)
+### Notifications (requested 2026-09-28, in progress)
 - Real push notifications on phones and computers, free (Web Push with a service worker, a Supabase server function, and a schedule). iPhone/iPad need the app added to the Home Screen and iOS 16.4+.
-- First set: a chore or reward waiting for a parent's OK, a morning summary (tasks, events, dinner), the day before a birthday or countdown, and new shared list or grocery items. Each person turns each one on or off per device.
+- Paul chose (2026-09-29): a morning summary (tasks, events, dinner), the day before a birthday or countdown, and new grocery or list items. Each person turns each one on or off per device.
 
 ### Alpha 0.9+ — Smart Features
 18. Natural-language Quick Add
@@ -265,3 +273,4 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - **0.8.1** — Routine stars per step
 - **0.8.2** — Home dashboard: a card for every section except Gifts, Quick Add at the top
 - **0.8.3** — Customize Home: drag, hide and add back cards, saved per person
+- **0.8.4** — Find recipes online (TheMealDB) and save them with a grocery list

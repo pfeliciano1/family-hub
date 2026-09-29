@@ -7,6 +7,7 @@ import { run, refresh } from '../data.js';
 import { recipeById, lines, lastHadLabel, foodSetupNotice, openGroceryPicker, suggestions } from './food.js';
 import { iconPicker } from './kids.js';
 import { openPlanner } from './meals.js';
+import { finderView } from './findrecipes.js';
 
 export const RECIPE_ICONS = ['🍽️', '🌮', '🍝', '🍕', '🍔', '🍗', '🥩', '🐟', '🍲', '🥗', '🍛', '🍜', '🥞', '🍳', '🥪', '🌯', '🍚', '🥘', '🍰', '🍪'];
 
@@ -36,14 +37,21 @@ function recipeCard(r) {
 }
 
 export function view() {
+  const finding = state.recipeTab === 'find';
   const title = `<div class="page-title"><h2>📖 Recipes</h2>
-    <button class="btn primary" data-action="recipe-new">＋ New recipe</button></div>`;
+    <button class="btn ${finding ? '' : 'primary'}" data-action="recipe-new">＋ New recipe</button></div>
+    <div class="tabs recipe-tabs" role="tablist">
+      <button class="${finding ? '' : 'active'}" data-action="recipe-tab" data-tab="mine" role="tab" aria-selected="${!finding}">My recipes${state.recipes.length ? ` (${state.recipes.length})` : ''}</button>
+      <button class="${finding ? 'active' : ''}" data-action="recipe-tab" data-tab="find" role="tab" aria-selected="${finding}">🔎 Find new recipes</button>
+    </div>`;
   if (state.foodMissing) return title + foodSetupNotice('recipes');
+  if (finding) return title + finderView();
   if (!state.recipes.length) {
     return `${title}<div class="panel empty"><div class="empty-icon">📖</div>
       <h3>Start your family cookbook</h3>
       <p>Save the meals you make again and again. Add them to the weekly plan with one tap, and send the ingredients straight to the grocery list.</p>
-      <button class="btn primary" data-action="recipe-new">Add a recipe</button></div>`;
+      <div class="empty-btns"><button class="btn primary" data-action="recipe-tab" data-tab="find">🔎 Find recipes</button>
+      <button class="btn" data-action="recipe-new">Write my own</button></div></div>`;
   }
   const tags = allTags();
   const shown = state.recipes.filter(matches);

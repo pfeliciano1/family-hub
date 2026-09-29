@@ -20,6 +20,7 @@ import * as habits from './modules/habits.js';
 import * as kidmode from './modules/kidmode.js';
 import * as food from './modules/food.js';
 import * as recipes from './modules/recipes.js';
+import * as findrecipes from './modules/findrecipes.js';
 import * as meals from './modules/meals.js';
 import * as lists from './modules/lists.js';
 import * as gifts from './modules/gifts.js';
@@ -29,7 +30,7 @@ import * as home from './modules/home.js';
 
 // Each module contributes its own buttons (actions), forms, and checkboxes (toggles).
 const modules = [auth, shell, countdowns, tasks, grocery, settings, weather, calendar,
-  chores, rewards, routines, habits, kidmode, food, recipes, meals, lists, gifts, projects, memories, home];
+  chores, rewards, routines, habits, kidmode, food, recipes, findrecipes, meals, lists, gifts, projects, memories, home];
 const actions = {
   'close-modal': () => closeModal(),
   'close-modal-backdrop': () => closeModal(),

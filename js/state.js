@@ -48,6 +48,8 @@ export const state = {
   mealWeek: null,      // the Sunday the meal planner is showing (YYYY-MM-DD)
   recipeTag: '',       // Recipes page filter
   recipeQuery: '',
+  recipeTab: 'mine',   // Recipes page: 'mine' or 'find'
+  finder: null,        // Find recipes: { kind, value, loading, results, error }
   kidId: null,         // Kid mode: the child using this device
   kidPicker: false,    // Kid mode: choosing who's using the device
   choreEdit: false,    // Tasks page: showing the chore manager
