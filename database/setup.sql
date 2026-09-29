@@ -1,5 +1,5 @@
 -- =====================================================================
--- Family Hub — Alpha 0.8.3 database setup
+-- Family Hub — Alpha 0.9 database setup
 --
 -- How to run: Supabase dashboard → SQL Editor → New query →
 -- paste this whole file → Run.
@@ -469,6 +469,117 @@ create table if not exists public.home_layouts (
   updated_at timestamptz not null default now()
 );
 
+-- ---------------------------------------------------------------------
+-- 3f. Notifications (Alpha 0.9): push notifications on phones and computers
+-- ---------------------------------------------------------------------
+
+-- One row per device where someone turned notifications on, with that
+-- device's choices. Rows are added through save_push_subscription().
+create table if not exists public.push_subscriptions (
+  id            uuid primary key default gen_random_uuid(),
+  family_id     uuid not null references public.families(id) on delete cascade,
+  member_id     uuid not null references public.family_members(id) on delete cascade,
+  endpoint      text not null unique check (endpoint ~* '^https://'),
+  p256dh        text not null check (length(p256dh) between 40 and 200),
+  auth          text not null check (length(auth) between 10 and 100),
+  device        text,
+  tz            text not null default 'America/New_York',
+  morning       boolean not null default true,   -- morning summary
+  morning_time  time not null default '07:00',
+  reminders     boolean not null default true,   -- the day before birthdays and countdowns
+  lists         boolean not null default true,   -- new grocery and list items
+  last_morning  date,
+  last_reminder date,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+create index if not exists push_subscriptions_member_idx on public.push_subscriptions (member_id);
+
+-- The notify function's signing keys and the schedule's secret.
+-- Nobody signed in can read this table; only the server can.
+create table if not exists public.push_config (
+  id           integer primary key default 1 check (id = 1),
+  public_key   text,
+  private_jwk  jsonb,
+  function_url text,
+  cron_secret  text not null default replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', ''),
+  created_at   timestamptz not null default now()
+);
+insert into public.push_config (id) values (1) on conflict (id) do nothing;
+
+-- Grocery and list items waiting to be announced. The notify function
+-- sends them in one message once people stop adding for a moment.
+create table if not exists public.notify_queue (
+  id         bigint generated always as identity primary key,
+  family_id  uuid not null references public.families(id) on delete cascade,
+  kind       text not null check (kind in ('grocery', 'list')),
+  list_id    uuid,
+  text       text not null,
+  actor      uuid,                                  -- the login that added it (not told about their own)
+  created_at timestamptz not null default now()
+);
+
+create or replace function public.queue_item_notice()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+declare
+  row_json jsonb := to_jsonb(new);
+begin
+  if exists (select 1 from public.push_subscriptions where family_id = new.family_id and lists) then
+    insert into public.notify_queue (family_id, kind, list_id, text, actor)
+    values (new.family_id,
+            case when tg_table_name = 'grocery_items' then 'grocery' else 'list' end,
+            (row_json ->> 'list_id')::uuid,
+            left(coalesce(row_json ->> 'name', row_json ->> 'text'), 80),
+            auth.uid());
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists grocery_items_notice on public.grocery_items;
+create trigger grocery_items_notice after insert on public.grocery_items
+  for each row execute function public.queue_item_notice();
+drop trigger if exists list_items_notice on public.list_items;
+create trigger list_items_notice after insert on public.list_items
+  for each row execute function public.queue_item_notice();
+
+-- Turn notifications on for this device (or update its keys). If the
+-- device was set up by someone else before, it now belongs to you.
+create or replace function public.save_push_subscription(
+  p_endpoint text, p_p256dh text, p_auth text, p_tz text, p_device text)
+returns uuid
+language plpgsql security definer set search_path = public
+as $$
+declare
+  v_me     uuid := public.my_member_id();
+  v_family uuid := public.my_family_id();
+  v_id     uuid;
+begin
+  if v_me is null then
+    raise exception 'Join or create a family first.';
+  end if;
+  delete from public.push_subscriptions where endpoint = p_endpoint and member_id <> v_me;
+  insert into public.push_subscriptions (family_id, member_id, endpoint, p256dh, auth, tz, device)
+  values (v_family, v_me, p_endpoint, p_p256dh, p_auth,
+          coalesce(nullif(trim(p_tz), ''), 'America/New_York'), left(p_device, 40))
+  on conflict (endpoint) do update
+    set p256dh = excluded.p256dh, auth = excluded.auth, tz = excluded.tz,
+        device = excluded.device, updated_at = now()
+  returning id into v_id;
+  return v_id;
+end;
+$$;
+
+-- Turn notifications off for a device (knowing its address is proof enough).
+create or replace function public.remove_push_subscription(p_endpoint text)
+returns void
+language sql security definer set search_path = public
+as $$
+  delete from public.push_subscriptions where endpoint = p_endpoint;
+$$;
+
 
 -- ---------------------------------------------------------------------
 -- 4. Onboarding: create a family, or join one with an invite code
@@ -579,6 +690,9 @@ alter table public.project_tasks     enable row level security;
 alter table public.project_expenses  enable row level security;
 alter table public.memories          enable row level security;
 alter table public.home_layouts      enable row level security;
+alter table public.push_subscriptions enable row level security;
+alter table public.push_config        enable row level security;  -- no rules: server only
+alter table public.notify_queue       enable row level security;  -- no rules: server only
 
 -- families
 drop policy if exists "Members can view their family" on public.families;
@@ -678,6 +792,13 @@ create policy "Members manage their own home layout" on public.home_layouts
   using (member_id = public.my_member_id() and family_id = public.my_family_id())
   with check (member_id = public.my_member_id() and family_id = public.my_family_id());
 
+-- Notifications (0.9): see and change only your own devices
+drop policy if exists "Members manage their own devices" on public.push_subscriptions;
+create policy "Members manage their own devices" on public.push_subscriptions
+  for all to authenticated
+  using (member_id = public.my_member_id() and family_id = public.my_family_id())
+  with check (member_id = public.my_member_id() and family_id = public.my_family_id());
+
 -- Family photos (0.8): each family can only reach its own folder.
 do $$
 declare
@@ -773,7 +894,8 @@ revoke all on public.families, public.family_members, public.countdowns,
               public.habits, public.habit_logs,
               public.recipes, public.meal_plan, public.lists, public.list_items,
               public.gifts, public.projects, public.project_tasks, public.project_expenses,
-              public.memories, public.home_layouts from anon;
+              public.memories, public.home_layouts, public.push_subscriptions from anon;
+revoke all on public.push_config, public.notify_queue from anon, authenticated;
 
 grant select on public.families to authenticated;
 grant update (name, location_name, latitude, longitude, temp_unit, parent_pin_hash)
@@ -796,6 +918,11 @@ grant select, insert, update, delete
      public.gifts, public.projects, public.project_tasks, public.project_expenses,
      public.memories, public.home_layouts to authenticated;
 
+-- Devices are added through save_push_subscription(); only the choices can be edited.
+grant select, delete on public.push_subscriptions to authenticated;
+grant update (morning, morning_time, reminders, lists, tz, device, updated_at)
+  on public.push_subscriptions to authenticated;
+
 revoke all on function public.my_family_id()              from public, anon;
 revoke all on function public.i_am_parent()               from public, anon;
 revoke all on function public.my_member_id()              from public, anon;
@@ -803,12 +930,17 @@ revoke all on function public.create_family(text, text)   from public, anon;
 revoke all on function public.join_family(text, text)     from public, anon;
 revoke all on function public.points_balances()           from public, anon;
 revoke all on function public.same_family_check()         from public, anon;
+revoke all on function public.save_push_subscription(text, text, text, text, text) from public, anon;
+revoke all on function public.remove_push_subscription(text) from public, anon;
+revoke all on function public.queue_item_notice()          from public, anon, authenticated;
 grant execute on function public.my_family_id()            to authenticated;
 grant execute on function public.i_am_parent()             to authenticated;
 grant execute on function public.my_member_id()            to authenticated;
 grant execute on function public.create_family(text, text) to authenticated;
 grant execute on function public.join_family(text, text)   to authenticated;
 grant execute on function public.points_balances()         to authenticated;
+grant execute on function public.save_push_subscription(text, text, text, text, text) to authenticated;
+grant execute on function public.remove_push_subscription(text) to authenticated;
 
 
 -- ---------------------------------------------------------------------
@@ -831,6 +963,47 @@ begin
       execute format('alter publication supabase_realtime add table public.%I', t);
     end if;
   end loop;
+end;
+$$;
+
+
+-- ---------------------------------------------------------------------
+-- 8. Notifications schedule (0.9): once a minute, ask the notify function
+-- to send anything that's due. It does nothing until someone turns
+-- notifications on, and the notify function has been set up.
+-- ---------------------------------------------------------------------
+
+create extension if not exists pg_net with schema extensions;
+create extension if not exists pg_cron with schema pg_catalog;
+
+create or replace function public.notify_tick()
+returns void
+language plpgsql security definer set search_path = public
+as $$
+declare
+  c record;
+begin
+  delete from public.notify_queue where created_at < now() - interval '1 day';
+  if not exists (select 1 from public.push_subscriptions) then
+    return;
+  end if;
+  select function_url, cron_secret into c from public.push_config where id = 1;
+  if c.function_url is null then
+    return; -- set the first time the app asks the notify function for its key
+  end if;
+  perform net.http_post(
+    url := c.function_url,
+    body := '{"action": "run"}'::jsonb,
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-cron-secret', c.cron_secret),
+    timeout_milliseconds := 25000
+  );
+end;
+$$;
+revoke all on function public.notify_tick() from public, anon, authenticated;
+
+do $$
+begin
+  perform cron.schedule('family-hub-notify', '* * * * *', 'select public.notify_tick()');
 end;
 $$;
 

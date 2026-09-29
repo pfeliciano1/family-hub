@@ -17,7 +17,7 @@ export const NAV = [
   { id: 'weather',    icon: '🌤️', label: 'Weather' },
   { id: 'projects',   icon: '🔨', label: 'Home Projects', short: 'Projects' },
   { id: 'memories',   icon: '📸', label: 'Family Memories', short: 'Memories' },
-  { id: 'assistant',  icon: '🤖', label: 'Family Assistant', soon: 'Alpha 0.9' },
+  { id: 'assistant',  icon: '🤖', label: 'Family Assistant', soon: 'Alpha 1.0' },
 ];
 
 export const SETTINGS = { id: 'settings', icon: '⚙️', label: 'Settings' };

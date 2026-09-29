@@ -1,4 +1,4 @@
-/* Family Hub — Alpha 0.8.4 */
+/* Family Hub — Alpha 0.9 */
 
 :root {
   --navy: #0b2447;
@@ -623,6 +623,17 @@ h3.who { display: flex; align-items: center; gap: 9px; }
 .people-pick .check span { display: inline-flex; align-items: center; gap: 6px; }
 .people-pick .avatar { width: 24px; height: 24px; font-size: 10px; }
 .tv .memory-home-img { aspect-ratio: 16 / 9; }
+
+/* Notifications (0.9) */
+.push-status { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.push-status span { display: flex; gap: 6px; }
+.push-prefs { display: flex; flex-direction: column; gap: 10px; }
+.push-pref span { display: flex; flex-direction: column; }
+.push-pref small { font-size: 12px; }
+.push-morning { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.push-time { border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font: inherit; }
+.push-others { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+.push-other { display: flex; justify-content: space-between; align-items: center; font-size: 14px; padding: 4px 0; }
 
 /* Find recipes (0.8.4) */
 .recipe-tabs { margin-top: -4px; }

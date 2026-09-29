@@ -1,10 +1,10 @@
-# Family Hub — Alpha 0.8
+# Family Hub — Alpha 0.9
 
 A private family command center: shared calendar, tasks, groceries, countdowns,
 weather, and more, on every device in the house. Runs at $0/month on
 GitHub Pages (hosting) and Supabase (database, logins, live sync).
 
-## What works in Alpha 0.8
+## What works in Alpha 0.9
 
 - Email + password accounts, password reset
 - Create a family, or join one with an invite code
@@ -42,7 +42,14 @@ GitHub Pages (hosting) and Supabase (database, logins, live sync).
 - Home projects with steps, a budget, and what you've spent
 - Family memories with photos, and "On this day" on Home
 
-Notifications and the rest are on the roadmap
+- Customize Home: drag cards (mouse or finger), hide and add them back; each
+  person's layout follows them to every device
+- Find recipes: search a free online recipe collection, save one, and send
+  its ingredients to the grocery list
+- Notifications on phones and computers: a morning summary, the day before
+  birthdays and countdowns, and new grocery or list items
+
+Smart features and the rest are on the roadmap
 (see `DEVELOPMENT_LOG.md`).
 
 ## First-time setup
@@ -194,6 +201,52 @@ Afterward, **Storage** in Supabase should list a bucket called
 Photos are shrunk before upload, so Supabase's free storage (1 GB) holds
 thousands. They're private to your family.
 
+## Setting up notifications
+Notifications are free. They use the phone makers' own push services, a small
+server function that writes the messages, and a once-a-minute schedule in your
+database. You set this up once; after that, each person turns notifications
+on for each of their devices.
+
+**A. Update the database.** In Supabase's **SQL Editor**, open a new query,
+paste all of `database/setup.sql`, and click **Run** (the "destructive
+operations" warning is expected). It adds the notification tables and turns on
+two built-in Supabase extensions, **pg_cron** (the schedule) and **pg_net**
+(lets the schedule call the function). If Supabase says an extension can't be
+created, open **Database → Extensions**, turn on `pg_cron` and `pg_net`, and
+run the script again.
+
+**B. Create the server function** (just like the calendar one):
+1. In Supabase, open **Edge Functions → Deploy a new function → Via Editor**.
+2. Name it exactly `notify`.
+3. Delete the sample code, paste in everything from
+   `supabase/functions/notify/index.ts`, and click **Deploy**.
+4. In the function's **Details** (or **Settings**), turn **off** "Verify JWT
+   with legacy secret" / "Enforce JWT verification", then save. The schedule
+   calls it with its own secret, which the function checks.
+
+There are no keys to copy: the function makes its own signing keys the first
+time someone turns notifications on, and keeps them in the database.
+
+**C. Upload the new app files** to GitHub the usual way (including the new
+`sw.js` next to `index.html`) and hard refresh. The footer should say
+**Alpha 0.9**.
+
+**D. Turn them on, on each device.** Open **Settings → Notifications → Turn
+on for this device**, allow notifications, then tap **Send a test**. Choose
+which ones this device gets and the morning summary time.
+- **iPhone / iPad:** first add Family Hub to the Home Screen (Safari → Share →
+  Add to Home Screen) and open it from that icon. Needs iOS 16.4 or newer.
+- **Samsung / Android:** works in Chrome, installed or not.
+- **Computers:** works in Chrome, Edge, Firefox, and Safari while the browser
+  is running.
+
+What gets sent:
+- **Morning summary** at the time you pick: today's calendar events, tasks due,
+  and dinner.
+- **Tomorrow:** birthdays (from profiles) and countdowns, at the same time.
+- **Grocery and lists:** a minute after someone else adds items, one message
+  per list, like "3 added to the Grocery List: Milk, Eggs, Bread".
+
 ## Updating later
 Upload the changed files to GitHub the same way. Your data lives in
 Supabase, so updating the app never touches it. If a new version includes a
@@ -213,6 +266,16 @@ database script, run it in the SQL Editor first.
   setting in step B.4, then reload.
 - **A calendar "was not accepted":** its secret address was reset in Google.
   Copy the new one and edit the calendar in Settings.
+- **"The notify server function isn't set up yet":** follow **Setting up
+  notifications** step B, and check the name is exactly `notify`.
+- **The test notification never pops up:** check the phone's own settings
+  (Settings → Notifications → Family Hub, or the browser on Android) and that
+  Focus / Do Not Disturb is off. On iPhone it only works from the Home Screen
+  icon.
+- **Morning summaries don't come:** in Supabase, **Integrations → Cron** (or
+  Database → Cron Jobs) should list `family-hub-notify` running every minute,
+  and **Edge Functions → notify → Logs** should show calls. If the job is
+  missing, run `database/setup.sql` again.
 - **Changes don't show on another device:** the footer should say
   "Live sync on." Reloading the page always pulls the latest data.
 
@@ -228,12 +291,16 @@ js/nav.js           list of sections (and which are coming soon)
 js/modules/         one file per section: home, calendar, tasks, chores,
                     rewards, routines, habits, kidmode, meals, recipes, lists,
                     gifts, projects, memories, grocery, countdowns, birthdays,
-                    weather, settings, auth, shell
+                    weather, settings, auth, shell, findrecipes (online
+                    recipe search), notify (notification settings)
                     (kids.js holds what chores/rewards/routines/habits share;
                     food.js holds meal history and recipe-to-grocery)
-database/setup.sql  tables, security rules, live sync
+sw.js               service worker that shows notifications
+database/setup.sql  tables, security rules, live sync, notification schedule
 supabase/functions/calendar-feed/index.ts
                     server function that reads the iCal addresses
+supabase/functions/notify/index.ts
+                    server function that sends notifications
 ```
 Adding a section means adding a module file and registering it in
 `shell.js` and `main.js`; nothing else has to change.

@@ -34,6 +34,8 @@ const SOURCES = {
   projectTasks:    ['project_tasks',    q => q.order('sort_order').order('created_at')],
   projectExpenses: ['project_expenses', q => q.order('spent_on').order('created_at')],
   memories:        ['memories',         q => q.order('happened_on', { ascending: false }).order('created_at', { ascending: false })],
+  // Notifications (0.9): only your own devices come back
+  pushSubs:        ['push_subscriptions', q => q.order('created_at')],
 };
 const FOOD_KEYS = new Set(['recipes', 'meals', 'lists', 'listItems']);
 const LIFE_KEYS = new Set(['gifts', 'projects', 'projectTasks', 'projectExpenses', 'memories']);
@@ -93,10 +95,12 @@ async function fetchKey(key) {
     if (KIDS_KEYS.has(key)) return kidsMissing(); // same for the 0.6 kids tables
     if (FOOD_KEYS.has(key)) { state.foodMissing = true; return []; } // and the 0.7 food tables
     if (LIFE_KEYS.has(key)) { state.lifeMissing = true; return []; } // and the 0.8 family life tables
+    if (key === 'pushSubs') { state.pushMissing = true; return []; } // and the 0.9 notifications table
     throw error;
   }
   if (FOOD_KEYS.has(key)) state.foodMissing = false;
   if (LIFE_KEYS.has(key)) state.lifeMissing = false;
+  if (key === 'pushSubs') state.pushMissing = false;
   if (key === 'calendars') state.calendarsMissing = false;
   if (KIDS_KEYS.has(key)) state.kidsMissing = false;
   return data;
@@ -121,7 +125,7 @@ function kidsMissing() {
 
 export async function loadAll() {
   const keys = ['family', 'members', 'countdowns', 'tasks', 'grocery', 'calendars',
-    ...[...KIDS_KEYS], ...[...FOOD_KEYS], ...[...LIFE_KEYS], 'homeLayout'];
+    ...[...KIDS_KEYS], ...[...FOOD_KEYS], ...[...LIFE_KEYS], 'homeLayout', 'pushSubs'];
   const results = await Promise.all(keys.map(fetchKey));
   const patch = {};
   keys.forEach((k, i) => { patch[k] = results[i]; });

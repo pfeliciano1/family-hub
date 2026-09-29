@@ -27,10 +27,11 @@ import * as gifts from './modules/gifts.js';
 import * as projects from './modules/projects.js';
 import * as memories from './modules/memories.js';
 import * as home from './modules/home.js';
+import * as notify from './modules/notify.js';
 
 // Each module contributes its own buttons (actions), forms, and checkboxes (toggles).
 const modules = [auth, shell, countdowns, tasks, grocery, settings, weather, calendar,
-  chores, rewards, routines, habits, kidmode, food, recipes, findrecipes, meals, lists, gifts, projects, memories, home];
+  chores, rewards, routines, habits, kidmode, food, recipes, findrecipes, meals, lists, gifts, projects, memories, home, notify];
 const actions = {
   'close-modal': () => closeModal(),
   'close-modal-backdrop': () => closeModal(),
@@ -176,6 +177,7 @@ async function boot() {
   try { state.tv = localStorage.getItem('familyHub.tv') === '1'; } catch { /* private mode */ }
   kidmode.restore();
   recipes.bindSearch();
+  notify.registerWorker();
 
   if (!configured) {
     update({ loading: false });

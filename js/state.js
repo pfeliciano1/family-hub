@@ -44,7 +44,11 @@ export const state = {
   homeLayout: null,    // { order: [card ids], hidden: [card ids] } or null for the default
   layoutMissing: false, // true until the 0.8.3 database script is run (layout kept on this device)
   layoutChangedAt: 0,
-  homeEdit: false,     // Home: customizing cards    // Memories page filter
+  homeEdit: false,     // Home: customizing cards
+  // Notifications (0.9)
+  pushSubs: [],        // your devices with notifications on
+  pushMissing: false,  // true until the 0.9 database script is run
+  pushEndpoint: null,  // this browser's push address, if it has one    // Memories page filter
   mealWeek: null,      // the Sunday the meal planner is showing (YYYY-MM-DD)
   recipeTag: '',       // Recipes page filter
   recipeQuery: '',

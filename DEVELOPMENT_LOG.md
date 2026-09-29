@@ -199,15 +199,20 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - No database change. Files: js/modules/findrecipes.js (new), recipes.js, main.js, state.js, shell.js (version), styles.css.
 - Tested in a headless browser against a fake TheMealDB (this workspace can't reach the real one): search, category, ideas, preview, both save buttons, duplicates, offline message, phone layout; earlier suites pass. Paul checks it live.
 
+## Alpha 0.9 — Notifications (2026-09-29)
+- Paul chose three: a **morning summary** (today's events, tasks due, dinner), **the day before** a birthday or countdown, and **new grocery or list items**. Free, using the open Web Push standard.
+- **Settings → Notifications:** turn on per device, send a test, choose which of the three this device gets and the summary time (default 7:00, in the device's time zone), turn off, or remove your other devices. iPhone/iPad explain the Home Screen step (iOS 16.4+); blocked or unsupported browsers say so.
+- **How it works:** `sw.js` (service worker, no caching) shows notifications and opens the right page when tapped. Devices are saved with `save_push_subscription()` into `push_subscriptions` (each person sees only their own; a shared device moves to whoever turns it on last). Adding a grocery or list item puts it in `notify_queue` (only if someone in the family wants those). `pg_cron` runs `notify_tick()` every minute, which calls the `notify` Edge Function through `pg_net` with a secret from `push_config`.
+- **The notify function** makes its own VAPID keys on first use (kept in `push_config`, unreadable by logins), encrypts each message for the device (RFC 8291) and signs it (RFC 8292) with built-in Web Crypto, no libraries. It sends list items once nobody has added any for 45 seconds, one message per list, never to the person who added them. Morning and "tomorrow" go out at each device's chosen time, at most once a day, and are skipped if more than 3 hours late. Your own birthday isn't announced to you. Devices that unsubscribed are deleted. Calendar events are read with the same code as calendar-feed.
+- Setup: run setup.sql, create the `notify` Edge Function with JWT verification off, upload files (README → Setting up notifications). No keys to copy.
+- Tested: encryption decrypts with the standard `http_ece` library and matches `web-push`'s; VAPID signature verifies; Deno type check passes; the run logic against a fake database (batching, not telling the adder, morning with two calendars de-duplicated, tomorrow's birthday/countdown/anniversary, once a day, late window, removed devices, other families untouched); SQL run twice, the write sweep, security (no direct inserts, can't read keys or the queue, can't see or take over others' devices except by holding the device's own push address, signed-out gets nothing), triggers and the schedule call with a stub pg_net/pg_cron; the settings panel in a headless browser with a simulated push service. Not tested: real Apple/Google push delivery and Supabase's pg_cron/pg_net, which only exist in Paul's project.
+- Files: sw.js (new), js/modules/notify.js (new), supabase/functions/notify/index.ts (new), js/data.js, state.js, session.js, main.js, settings.js, nav.js, shell.js (version), styles.css, database/setup.sql, README.md.
+
 ---
 
 ## Next Development Priorities
 
-### Notifications (requested 2026-09-28, in progress)
-- Real push notifications on phones and computers, free (Web Push with a service worker, a Supabase server function, and a schedule). iPhone/iPad need the app added to the Home Screen and iOS 16.4+.
-- Paul chose (2026-09-29): a morning summary (tasks, events, dinner), the day before a birthday or countdown, and new grocery or list items. Each person turns each one on or off per device.
-
-### Alpha 0.9+ — Smart Features
+### Alpha 1.0 — Smart Features
 18. Natural-language Quick Add
 19. Family Assistant (only if its value justifies any cost)
 20. TV auto-rotation between views
@@ -248,7 +253,7 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 | FEAT-014 | Feature | Done (0.8) | Family memories with private photos and "On this day" |
 | BUG-003 | Bug | Fixed (0.8) | Routine bonus not paid when set after the steps were already checked |
 | BUG-004 | Bug | Fixed (0.8) | 0.8 database rule blocked points, tasks, and calendars ("belongs to a different family") |
-| FEAT-015 | Feature | Planned | Push notifications |
+| FEAT-015 | Feature | Done (0.9) | Push notifications |
 | FEAT-006 | Feature | Done (0.5) | Weather and clothing engine, with activity-aware tips |
 | FEAT-007 | Feature | Partial (0.4) | TV mode wake lock, full screen, large text; auto-rotation later |
 | FEAT-008 | Feature | Planned | Family Assistant / natural-language Quick Add |
@@ -274,3 +279,4 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - **0.8.2** — Home dashboard: a card for every section except Gifts, Quick Add at the top
 - **0.8.3** — Customize Home: drag, hide and add back cards, saved per person
 - **0.8.4** — Find recipes online (TheMealDB) and save them with a grocery list
+- **0.9** — Notifications: morning summary, the day before birthdays and countdowns, new grocery and list items

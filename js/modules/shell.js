@@ -86,7 +86,7 @@ export function shellView() {
       ${renderView()}
       <footer class="footer">
         <span>${state.live ? '<span class="live">● Live sync on</span>' : '<span class="offline">○ Connecting…</span>'}</span>
-        <span>Family Hub • Alpha 0.8.4${state.tv ? ' • TV Display' : ''}</span>
+        <span>Family Hub • Alpha 0.9${state.tv ? ' • TV Display' : ''}</span>
       </footer>
     </main>
 

@@ -7,6 +7,7 @@ import {
 import { run, refresh } from '../data.js';
 import { settingsPanel as calendarsPanel } from './calendar.js';
 import { settingsPanel as kidModePanel } from './kidmode.js';
+import { settingsPanel as notifyPanel } from './notify.js';
 import { pinHash, validPin, newId } from './kids.js';
 
 const PALETTE = ['#1976d2', '#8e24aa', '#2e7d32', '#ef6c00', '#c62828', '#00838f', '#6d4c41', '#3949ab'];
@@ -68,6 +69,8 @@ export function view() {
     ${calendarsPanel()}
 
     ${state.kidsMissing ? '' : kidModePanel()}
+
+    ${notifyPanel()}
 
     <section class="panel">
       <h3>🔑 Invite another adult</h3>
