@@ -1,18 +1,23 @@
-/* Family Hub — Alpha 0.9 */
+/* Family Hub — Alpha 0.9.1 */
 
 :root {
-  --navy: #0b2447;
-  --blue: #1976d2;
-  --blue-dark: #145da0;
-  --bg: #f4f8fc;
-  --card: #fff;
-  --line: #dce7f2;
-  --line-soft: #edf2f7;
-  --text: #14233b;
-  --text-2: #34465e;
-  --muted: #66758a;
-  --ok: #2e7d32;
-  --warn: #c62828;
+  /* Heritage Green theme (Alpha 0.9.1): warm off-white with dark green, blue and red */
+  --navy: #1F4D3A;
+  --blue: #1E3A5F;
+  --blue-dark: #1F4D3A;
+  --bg: #F6F1E7;
+  --card: #FFFCF6;
+  --line: #E6DDCB;
+  --line-soft: #EFE7D6;
+  --text: #151515;
+  --text-2: #3A3A36;
+  --muted: #6E6A60;
+  --ok: #1F4D3A;
+  --warn: #8C2F2F;
+  --green: #1F4D3A;
+  --red: #8C2F2F;
+  --brass: #B8893B;
+  --hero: #EFE7D6;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
 }
@@ -20,7 +25,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: Outfit, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -76,7 +81,7 @@ code { background: #eef4fb; padding: 1px 6px; border-radius: 5px; }
 /* ---------- Sign in & onboarding ---------- */
 .auth-wrap {
   min-height: 100vh; display: grid; place-items: center; padding: 24px;
-  background: linear-gradient(135deg, #0b2447, #1d4f91);
+  background: linear-gradient(135deg, #1F4D3A, #1E3A5F);
 }
 .auth-card {
   background: #fff; border-radius: 18px; padding: 30px; width: min(420px, 100%);
@@ -404,7 +409,7 @@ h3.who { display: flex; align-items: center; gap: 9px; }
 .pin-input { font-size: 28px !important; letter-spacing: 12px; text-align: center; }
 
 /* Kid mode */
-.kid-app { min-height: 100vh; padding: 18px 18px calc(18px + var(--safe-bottom)); background: linear-gradient(160deg, color-mix(in srgb, var(--kid, #1976d2) 14%, #f4f8fc), #f4f8fc 55%); }
+.kid-app { min-height: 100vh; padding: 18px 18px calc(18px + var(--safe-bottom)); background: linear-gradient(160deg, color-mix(in srgb, var(--kid, #1976d2) 14%, var(--bg)), var(--bg) 55%); }
 .kid-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
 .kid-hello { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 220px; }
 .kid-hello h1 { margin: 0; font-size: 30px; }
@@ -786,3 +791,29 @@ body.home-dragging { user-select: none; -webkit-user-select: none; cursor: grabb
 @media (prefers-reduced-motion: reduce) {
   .toast, .exit-tv, .bar span { transition: none; }
 }
+
+/* ---------- Theme (Alpha 0.9.1): bigger, darker type and colored card headers ---------- */
+body { font-size: 16.5px; }
+.muted { font-size: 14px; }
+.hero { background: var(--hero); border: 1px solid var(--line); }
+.hero h2 { font-size: 34px; font-weight: 800; letter-spacing: -.01em; color: var(--text); }
+.hero-weather { background: var(--card); border-color: var(--line); }
+.hero-weather:hover { border-color: var(--brass); }
+.btn.primary { background: var(--navy); border-color: var(--navy); }
+.quick button { background: var(--card); border-color: var(--line); color: var(--navy); font-weight: 700; }
+a, .link { color: var(--blue); }
+.card { border-radius: 14px; box-shadow: 0 3px 10px rgba(40, 30, 10, .07); --pad: 15px; }
+.card h3 { font-size: 17.5px; font-weight: 800; }
+.tv .card { --pad: 20px; }
+.tv .card h3 { font-size: 21px; }
+/* Each Home card gets a band in its section's color: blue for today and planning,
+   red for kids, people and dates, green for food and the home. */
+.card[data-card] { --sec: var(--green); }
+.card[data-card="today"], .card[data-card="tasks"], .card[data-card="quick"], .card[data-card="weather"] { --sec: var(--blue); }
+.card[data-card="rewards"], .card[data-card="routines"], .card[data-card="habits"], .card[data-card="countdowns"],
+.card[data-card="birthdays"], .card[data-card="members"] { --sec: var(--red); }
+.card[data-card] > h3 {
+  margin: calc(-1 * var(--pad)) calc(-1 * var(--pad)) 13px; padding: 12px var(--pad);
+  background: var(--sec); color: #FBF7EF; border-radius: 13px 13px 0 0;
+}
+.card[data-card] > h3 a { color: #F3E3C3; }

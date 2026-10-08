@@ -923,6 +923,12 @@ grant select, delete on public.push_subscriptions to authenticated;
 grant update (morning, morning_time, reminders, lists, tz, device, updated_at)
   on public.push_subscriptions to authenticated;
 
+-- The server functions (notify) sign in as Supabase's service role, which
+-- also needs to be given access when new tables aren't exposed automatically.
+grant usage on schema public to service_role;
+grant select, insert, update, delete on all tables in schema public to service_role;
+grant usage, select on all sequences in schema public to service_role;
+
 revoke all on function public.my_family_id()              from public, anon;
 revoke all on function public.i_am_parent()               from public, anon;
 revoke all on function public.my_member_id()              from public, anon;

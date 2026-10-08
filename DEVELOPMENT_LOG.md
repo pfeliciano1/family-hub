@@ -16,7 +16,7 @@ This document tracks important development decisions, bugs, fixes, feature reque
 - 0.2: Fixed BUG-001 (no way to exit TV mode). Added Exit TV Mode button and Escape key.
 - 0.3: Removed the decorative blue shape behind the weather card (UI-001). Added this log.
 
-The prototype established the approved look: navy sidebar, blue accents, card dashboard. All dashboard content was sample data.
+The prototype established the first look: navy sidebar, blue accents, card dashboard (replaced by Heritage Green in Alpha 0.9.1). All dashboard content was sample data.
 
 ---
 
@@ -206,7 +206,17 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - **The notify function** makes its own VAPID keys on first use (kept in `push_config`, unreadable by logins), encrypts each message for the device (RFC 8291) and signs it (RFC 8292) with built-in Web Crypto, no libraries. It sends list items once nobody has added any for 45 seconds, one message per list, never to the person who added them. Morning and "tomorrow" go out at each device's chosen time, at most once a day, and are skipped if more than 3 hours late. Your own birthday isn't announced to you. Devices that unsubscribed are deleted. Calendar events are read with the same code as calendar-feed.
 - Setup: run setup.sql, create the `notify` Edge Function with JWT verification off, upload files (README → Setting up notifications). No keys to copy.
 - Tested: encryption decrypts with the standard `http_ece` library and matches `web-push`'s; VAPID signature verifies; Deno type check passes; the run logic against a fake database (batching, not telling the adder, morning with two calendars de-duplicated, tomorrow's birthday/countdown/anniversary, once a day, late window, removed devices, other families untouched); SQL run twice, the write sweep, security (no direct inserts, can't read keys or the queue, can't see or take over others' devices except by holding the device's own push address, signed-out gets nothing), triggers and the schedule call with a stub pg_net/pg_cron; the settings panel in a headless browser with a simulated push service. Not tested: real Apple/Google push delivery and Supabase's pg_cron/pg_net, which only exist in Paul's project.
+- **BUG-005 (fixed same day):** turning notifications on said "Run database/setup.sql (Alpha 0.9) first" even after running it. Because "Automatically expose new tables" is off, Supabase's service role (used by the notify function) had no access to the new tables. setup.sql now grants the service role access to the app's tables. Reproduced and fixed locally; logins still can't read the keys or the queue.
 - Files: sw.js (new), js/modules/notify.js (new), supabase/functions/notify/index.ts (new), js/data.js, state.js, session.js, main.js, settings.js, nav.js, shell.js (version), styles.css, database/setup.sql, README.md.
+
+## Alpha 0.9.1 — New look (2026-10-08)
+- Paul asked for a warm, modern, classic look: off-white background, dark green, blue and red cards, and larger near-black text. He compared four mockups (palette, font and card style) and chose **A: Heritage Green + Outfit, dark color bands**.
+- **Colors:** linen background #F6F1E7, off-white cards #FFFCF6, forest green #1F4D3A (sidebar and main buttons), navy #1E3A5F, brick red #8C2F2F, brass accent #B8893B, text #151515. This replaces the original navy/blue look from the prototype.
+- **Font:** Outfit (Google Fonts, free). Body text is 16.5px, the greeting is 34px, card titles are bigger and bolder, and small grey labels are 14px.
+- **Home cards** get a header band in their section's color: blue for today and planning (Calendar, Tasks, Quick Add, Weather); red for kids, people and dates (Rewards, Routines, Habits, Countdowns, Birthdays, Family); green for food and the home (Dinner, Recipes, Grocery, Lists, Projects, Memories). Cards carry `data-card` for this.
+- **New default Home order:** Calendar, Tasks, Quick Add / Rewards, Routines, Habits / Countdowns, Birthdays, Projects / Dinner, Recipes, Grocery / Lists, Memories, Weather / Family. People who saved a custom layout (Paul) keep theirs until they tap Customize Home → Reset to default.
+- No database change. Tested in a headless browser: Home (computer, phone, Customize, TV), Recipes and Tasks pages; no errors.
+- Files: index.html (font, theme color), manifest.json (theme color), styles.css, js/modules/home.js, js/modules/shell.js (version).
 
 ---
 
@@ -254,6 +264,7 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 | BUG-003 | Bug | Fixed (0.8) | Routine bonus not paid when set after the steps were already checked |
 | BUG-004 | Bug | Fixed (0.8) | 0.8 database rule blocked points, tasks, and calendars ("belongs to a different family") |
 | FEAT-015 | Feature | Done (0.9) | Push notifications |
+| BUG-005 | Bug | Fixed (0.9) | Notify function couldn't read its tables (service role not granted) |
 | FEAT-006 | Feature | Done (0.5) | Weather and clothing engine, with activity-aware tips |
 | FEAT-007 | Feature | Partial (0.4) | TV mode wake lock, full screen, large text; auto-rotation later |
 | FEAT-008 | Feature | Planned | Family Assistant / natural-language Quick Add |

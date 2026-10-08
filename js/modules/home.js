@@ -104,16 +104,16 @@ const CARDS = [
   ['today', '📅', 'Today\'s Calendar', todayCard],
   ['tasks', '✅', 'Today\'s Tasks', tasksCard],
   ['quick', '⚡', 'Quick Add', quickAddCard],
-  ['dinner', '🍽️', 'Dinner Tonight', dinnerCard],
-  ['grocery', '🛒', 'Grocery List', groceryCard],
-  ['lists', '📝', 'Lists', listsCard],
   ['rewards', '⭐', 'Rewards', rewardsCard],
   ['routines', '🔄', 'Routines', routinesHomeCard],
   ['habits', '❤️', 'Habits', habitsHomeCard],
   ['countdowns', '⏳', 'Countdowns', countdownsCard],
   ['birthdays', '🎂', 'Birthdays & Anniversaries', birthdaysCard],
   ['projects', '🔨', 'Home Projects', projectsCard],
+  ['dinner', '🍽️', 'Dinner Tonight', dinnerCard],
   ['recipes', '📖', 'Recipes', recipesCard],
+  ['grocery', '🛒', 'Grocery List', groceryCard],
+  ['lists', '📝', 'Lists', listsCard],
   ['memory', '📸', 'Family Memories', memoryCard],
   ['weather', '🌤️', 'Weather & What to Wear', weatherCard],
   ['members', '👨‍👩‍👧‍👦', 'Family', membersCard],
@@ -191,14 +191,17 @@ function editBar() {
     </div></div>`;
 }
 
+// Marks a card with its id, so the theme can color its header
+const tag = (id, html) => html.replace('<div class="card', `<div data-card="${id}" class="card`);
+
 function grid() {
   const { order, hidden } = layout();
   const shown = order.filter(id => !hidden.has(id));
   if (state.homeEdit && !state.tv) {
-    return `${editBar()}<div class="grid editing">${shown.map((id, i) => editSlot(id, BY_ID[id][3](), i, shown.length)).join('')}</div>
+    return `${editBar()}<div class="grid editing">${shown.map((id, i) => editSlot(id, tag(id, BY_ID[id][3]()), i, shown.length)).join('')}</div>
       <div class="edit-foot"><button class="btn primary" data-action="home-edit-done">Done</button></div>`;
   }
-  const cards = shown.map(id => BY_ID[id][3]()).join('');
+  const cards = shown.map(id => tag(id, BY_ID[id][3]())).join('');
   return `<div class="grid">${cards || `<div class="card">${emptyMini('All your cards are hidden.', 'home-edit', 'Customize')}</div>`}</div>`;
 }
 
