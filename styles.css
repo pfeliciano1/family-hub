@@ -1,4 +1,4 @@
-/* Family Hub — Alpha 0.9.1 */
+/* Family Hub — Alpha 0.9.2 */
 
 :root {
   /* Heritage Green theme (Alpha 0.9.1): warm off-white with dark green, blue and red */
@@ -392,10 +392,21 @@ h3.who { display: flex; align-items: center; gap: 9px; }
 .routine-count { font-weight: 800; color: var(--text-2); }
 .check.step { padding: 6px 0; font-size: 14px; }
 .check.step.on span { text-decoration: line-through; color: var(--muted); }
-.habit { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line-soft); font-size: 14px; }
+/* Habit rows look like countdown rows (.cd-icon, .cd-main, .cd-days) */
+.habit { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
 .habit:last-child { border-bottom: 0; }
+.habit-check { display: flex; cursor: pointer; padding: 4px; flex: none; }
+.habit-check input { width: 24px; height: 24px; accent-color: var(--ok); margin: 0; cursor: pointer; }
+.habit .cd-main b { overflow-wrap: break-word; }
+.habit.on .cd-main b { color: var(--muted); }
+.habit .cd-main small { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.habit .cd-days strong { color: var(--red, var(--warn)); white-space: nowrap; }
+.habit .cd-days.none strong { color: var(--muted); font-weight: 400; }
+.habit .cd-days small { white-space: nowrap; }
+.habit-who { display: flex; align-items: center; gap: 9px; color: var(--text); font-size: 16px; }
+.habit-who:first-of-type { margin-top: 4px; }
 .week-dots { display: flex; gap: 3px; flex: none; }
-.week-dots i { width: 9px; height: 9px; border-radius: 50%; background: #e3eaf2; }
+.week-dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
 .week-dots i.on { background: var(--ok); }
 .streak { font-weight: 800; min-width: 44px; text-align: right; flex: none; }
 .streak.none { color: #b3c0cf; font-weight: 400; }
@@ -764,7 +775,10 @@ body.home-dragging { user-select: none; -webkit-user-select: none; cursor: grabb
   .m-dots { display: flex; }
   .cal-nav b { width: 100%; margin: 4px 0 0; }
   .kid-grid { grid-template-columns: 1fr; }
-  .week-dots { display: none; }
+  .habit { gap: 10px; }
+  .habit .cd-icon { font-size: 22px; }
+  .habit .cd-days { min-width: 0; }
+  .habit .cd-days strong { font-size: 20px; }
   .approval { flex-wrap: wrap; }
   .approval .row-actions { width: 100%; justify-content: flex-end; }
   .kid-hello h1 { font-size: 24px; }

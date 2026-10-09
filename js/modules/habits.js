@@ -17,18 +17,23 @@ function lastWeek() {
   });
 }
 
+// One habit as a full-width row, laid out like a countdown: check it off,
+// its name and last 7 days, then the streak as the big number.
 export function habitRow(h, kid = false) {
   const t = today();
   const on = habitDone(h.id, t);
   const s = streak(h.id);
   return `<div class="habit ${on ? 'on' : ''}">
-    <label class="check"><input type="checkbox" data-toggle="habit-done" data-id="${esc(h.id)}" ${on ? 'checked' : ''}>
-      <span>${esc(h.icon)} ${esc(h.title)}</span></label>
-    <span class="week-dots" aria-label="Last 7 days">${lastWeek().map(d => `<i class="${habitDone(h.id, toISODate(d)) ? 'on' : ''}" title="${fmtDate(d, { weekday: 'short' })}"></i>`).join('')}</span>
-    <span class="streak ${s ? '' : 'none'}" title="Days in a row">${s ? `🔥 ${s}` : '—'}</span>
-    ${kid ? '' : `<span class="row-actions">
+    <label class="habit-check" title="${on ? 'Done today' : 'Mark done today'}">
+      <input type="checkbox" data-toggle="habit-done" data-id="${esc(h.id)}" ${on ? 'checked' : ''} aria-label="${esc(h.title)} done today"></label>
+    <div class="cd-icon">${esc(h.icon)}</div>
+    <div class="cd-main"><b>${esc(h.title)}</b>
+      <small><span class="week-dots" aria-label="Last 7 days">${lastWeek().map(d => `<i class="${habitDone(h.id, toISODate(d)) ? 'on' : ''}" title="${fmtDate(d, { weekday: 'short' })}"></i>`).join('')}</span>
+        ${on ? 'Done today' : 'Not done yet today'}</small></div>
+    <div class="cd-days ${s ? '' : 'none'}" title="Days in a row"><strong>${s ? `🔥 ${s}` : '0'}</strong><small>${s === 1 ? 'day' : 'days'} in a row</small></div>
+    ${kid ? '' : `<div class="row-actions">
       <button class="icon-btn" data-action="habit-edit" data-id="${esc(h.id)}" title="Edit" aria-label="Edit ${esc(h.title)}">✏️</button>
-      <button class="icon-btn" data-action="habit-delete" data-id="${esc(h.id)}" title="Delete" aria-label="Delete ${esc(h.title)}">🗑️</button></span>`}
+      <button class="icon-btn" data-action="habit-delete" data-id="${esc(h.id)}" title="Delete" aria-label="Delete ${esc(h.title)}">🗑️</button></div>`}
   </div>`;
 }
 
@@ -43,10 +48,8 @@ export function view() {
       <p>Reading, drinking water, practicing piano, anything done once a day. Check it off and watch the streak grow. 🔥</p>
       <button class="btn primary" data-action="habit-new">Add a habit</button></div>`;
   }
-  return `${title}<div class="kid-grid">${people.map(m => `<div class="panel">
-      <h3 class="who">${avatar(m)} ${esc(m.display_name)}</h3>
-      ${state.habits.filter(h => h.member_id === m.id).map(h => habitRow(h)).join('')}
-    </div>`).join('')}</div>`;
+  return `${title}${people.map(m => `<h3 class="section-label who habit-who">${avatar(m)} ${esc(m.display_name)}</h3>
+    <div class="panel">${state.habits.filter(h => h.member_id === m.id).map(h => habitRow(h)).join('')}</div>`).join('')}`;
 }
 
 // Home card: each person's routines for today, with progress.

@@ -218,6 +218,13 @@ The prototype's look was kept; the code underneath was rebuilt so every working 
 - No database change. Tested in a headless browser: Home (computer, phone, Customize, TV), Recipes and Tasks pages; no errors.
 - Files: index.html (font, theme color), manifest.json (theme color), styles.css, js/modules/home.js, js/modules/shell.js (version).
 
+## Alpha 0.9.2 — Habits as rows (2026-10-09)
+- **UI-002:** on the Habits page, habit names wrapped one or two words per line. Each person's habits sat in a narrow box (three per row) shared with the week dots, streak and edit buttons, which left the name about 80px.
+- Paul asked for rows like Countdowns. Each person now gets a labeled, full-width panel. A habit row shows a large checkbox, the habit's icon, its name in bold, the last 7 days as dots with "Done today" or "Not done yet today", and the streak as the big number ("🔥 2 days in a row").
+- Kid mode uses the same row, without the edit and delete buttons. The Home card is unchanged. No database change.
+- Tested in a headless browser on a computer, a Chromebook-sized screen and a phone, plus checking a habit off. No errors.
+- Files: js/modules/habits.js, styles.css, js/modules/shell.js (version).
+
 ---
 
 ## Next Development Priorities
