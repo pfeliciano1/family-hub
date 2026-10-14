@@ -8,8 +8,9 @@ import { run, refresh } from '../data.js';
 import { CATEGORIES, CATEGORY_IDS, catLabel, catIcon, metFor, calories, fmtMinutes } from './fitcalc.js';
 import { libraryView, routineById } from './fitroutines.js';
 import { planPanel } from './fitplan.js';
+import { dashboardView } from './fitdash.js';
 
-const TABS = [['routines', '📋', 'Routines'], ['log', '📝', 'Log & history'], ['settings', '⚙️', 'Settings']];
+const TABS = [['routines', '📋', 'Routines'], ['dash', '📊', 'Dashboard'], ['log', '📝', 'Log & history'], ['settings', '⚙️', 'Settings']];
 
 // Settings with their defaults until the person saves their own
 export function profile() {
@@ -42,7 +43,7 @@ export function view() {
       <p>Run <code>database/fitness.sql</code> in Supabase's SQL Editor to turn on Fitness. See "Setting up Fitness" in the README.</p></div>`;
   }
   const tab = TABS.some(t => t[0] === state.fitTab) ? state.fitTab : 'routines';
-  const body = tab === 'log' ? historyView() : tab === 'settings' ? settingsView() : planPanel() + libraryView();
+  const body = tab === 'log' ? historyView() : tab === 'dash' ? dashboardView() : tab === 'settings' ? settingsView() : planPanel() + libraryView();
   return `<div class="page-title"><h2>🏋️ Fitness</h2>
       <button class="btn primary" data-action="fit-log-new">＋ Log a workout</button></div>
     <p class="muted fit-private">🔒 Only you can see your workouts${state.fitProfile?.show_on_family_display ? '. Your streak shows on the family display.' : '.'}</p>

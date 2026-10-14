@@ -59,6 +59,7 @@ export const state = {
   fitTab: 'routines',  // Fitness page tab
   fitCat: '',          // Routines filter: '' or a category
   fitShowAll: false,   // History: show every workout
+  fitRange: 'week',    // Dashboard: week | month | 90 | all
   mealWeek: null,      // the Sunday the meal planner is showing (YYYY-MM-DD)
   recipeTag: '',       // Recipes page filter
   recipeQuery: '',

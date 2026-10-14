@@ -32,11 +32,12 @@ import * as fitness from './modules/fitness.js';
 import * as fitroutines from './modules/fitroutines.js';
 import * as fitplayer from './modules/fitplayer.js';
 import * as fitplan from './modules/fitplan.js';
+import * as fitdash from './modules/fitdash.js';
 
 // Each module contributes its own buttons (actions), forms, and checkboxes (toggles).
 const modules = [auth, shell, countdowns, tasks, grocery, settings, weather, calendar,
   chores, rewards, routines, habits, kidmode, food, recipes, findrecipes, meals, lists, gifts, projects, memories, home, notify,
-  fitness, fitroutines, fitplayer, fitplan];
+  fitness, fitroutines, fitplayer, fitplan, fitdash];
 const actions = {
   'close-modal': () => closeModal(),
   'close-modal-backdrop': () => closeModal(),
