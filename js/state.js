@@ -48,7 +48,17 @@ export const state = {
   // Notifications (0.9)
   pushSubs: [],        // your devices with notifications on
   pushMissing: false,  // true until the 0.9 database script is run
-  pushEndpoint: null,  // this browser's push address, if it has one    // Memories page filter
+  pushEndpoint: null,  // this browser's push address, if it has one
+  // Fitness (0.10): private to the signed-in login
+  fitnessMissing: false, // true until database/fitness.sql is run
+  fitProfile: null,    // weight, busy calendars, slot window, family display
+  fitExercises: [],    // shared exercise library
+  fitRoutines: [],     // built-in (owner_id empty) and your own
+  fitSteps: [],
+  fitLogs: [],         // your workouts, newest first
+  fitTab: 'routines',  // Fitness page tab
+  fitCat: '',          // Routines filter: '' or a category
+  fitShowAll: false,   // History: show every workout    // Memories page filter
   mealWeek: null,      // the Sunday the meal planner is showing (YYYY-MM-DD)
   recipeTag: '',       // Recipes page filter
   recipeQuery: '',

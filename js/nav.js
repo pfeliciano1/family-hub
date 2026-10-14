@@ -11,6 +11,7 @@ export const NAV = [
   { id: 'lists',      icon: '📝', label: 'Lists' },
   { id: 'routines',   icon: '🔄', label: 'Routines' },
   { id: 'habits',     icon: '❤️', label: 'Habits' },
+  { id: 'fitness',    icon: '🏋️', label: 'Fitness', personal: true }, // private to each login: hidden on TV and Kid mode
   { id: 'countdowns', icon: '⏳', label: 'Countdowns' },
   { id: 'birthdays',  icon: '🎂', label: 'Birthdays & Anniversaries', short: 'Birthdays' },
   { id: 'gifts',      icon: '🎁', label: 'Gifts' },

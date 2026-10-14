@@ -76,6 +76,7 @@ async function fetchKey(key) {
     return data;
   }
   if (key === 'homeLayout') return fetchHomeLayout();
+  if (FITNESS[key]) return fetchFitness(key);
   if (key === 'balances') {
     const { data, error } = await sb.rpc('points_balances');
     if (error) return kidsMissing();
@@ -106,6 +107,29 @@ async function fetchKey(key) {
   return data;
 }
 
+// Fitness (0.10): private to each login, so these aren't filtered by family.
+// The database only returns your own profile, workouts and routines, plus
+// the built-in routines and exercise library everyone shares.
+const FITNESS = {
+  fitProfile:   () => sb.from('fitness_profiles').select('*').eq('user_id', state.user.id).maybeSingle(),
+  fitExercises: () => sb.from('fitness_exercises').select('*').order('name'),
+  fitRoutines:  () => sb.from('fitness_routines').select('*').order('created_at'),
+  fitSteps:     () => sb.from('fitness_routine_steps').select('*').order('position'),
+  fitLogs:      () => sb.from('fitness_logs').select('*').eq('user_id', state.user.id)
+    .order('performed_at', { ascending: false }).limit(5000),
+};
+
+async function fetchFitness(key) {
+  let data, error;
+  try { ({ data, error } = await FITNESS[key]()); } catch (e) { error = e; }
+  if (error) {
+    state.fitnessMissing = true; // until database/fitness.sql is run
+    return key === 'fitProfile' ? null : [];
+  }
+  state.fitnessMissing = false;
+  return data;
+}
+
 // Home layout (0.8.3): each person's own card order and hidden cards.
 // Until the database script is run, it's kept on this device instead.
 async function fetchHomeLayout() {
@@ -125,7 +149,8 @@ function kidsMissing() {
 
 export async function loadAll() {
   const keys = ['family', 'members', 'countdowns', 'tasks', 'grocery', 'calendars',
-    ...[...KIDS_KEYS], ...[...FOOD_KEYS], ...[...LIFE_KEYS], 'homeLayout', 'pushSubs'];
+    ...[...KIDS_KEYS], ...[...FOOD_KEYS], ...[...LIFE_KEYS], 'homeLayout', 'pushSubs',
+    ...Object.keys(FITNESS)];
   const results = await Promise.all(keys.map(fetchKey));
   const patch = {};
   keys.forEach((k, i) => { patch[k] = results[i]; });

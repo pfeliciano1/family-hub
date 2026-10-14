@@ -19,6 +19,7 @@ import * as lists from './lists.js';
 import * as gifts from './gifts.js';
 import * as projects from './projects.js';
 import * as memories from './memories.js';
+import * as fitness from './fitness.js';
 
 // Sections that are built. Everything else in NAV shows a roadmap page.
 const VIEWS = {
@@ -39,6 +40,7 @@ const VIEWS = {
   gifts: gifts.view,
   projects: projects.view,
   memories: memories.view,
+  fitness: fitness.view,
 };
 
 const MOBILE_TABS = ['home', 'calendar', 'tasks', 'grocery'];
@@ -60,6 +62,9 @@ function renderView() {
   return n ? placeholder(n) : home.view();
 }
 
+// Personal sections (Fitness) stay off the shared TV display
+const shownNav = () => NAV.filter(n => !(n.personal && state.tv));
+
 function navLink(n) {
   const active = state.view === n.id ? 'active' : '';
   return `<a href="#/${n.id}" class="${active} ${n.soon ? 'is-soon' : ''}" ${active ? 'aria-current="page"' : ''}>
@@ -71,7 +76,7 @@ export function shellView() {
     <aside class="sidebar">
       <div class="brand"><div class="logo">🏠</div>
         <div><h1>Family Hub</h1><p>${esc(state.family.name)}</p></div></div>
-      <nav class="nav" aria-label="Sections">${NAV.map(navLink).join('')}</nav>
+      <nav class="nav" aria-label="Sections">${shownNav().map(navLink).join('')}</nav>
       <div class="divider"></div>
       <p class="members-title">Family members</p>
       ${state.members.map(m => `<div class="member">${avatar(m)}<div>${esc(m.display_name)}
@@ -86,7 +91,7 @@ export function shellView() {
       ${renderView()}
       <footer class="footer">
         <span>${state.live ? '<span class="live">● Live sync on</span>' : '<span class="offline">○ Connecting…</span>'}</span>
-        <span>Family Hub • Alpha 0.9.2${state.tv ? ' • TV Display' : ''}</span>
+        <span>Family Hub • Alpha 0.10 beta${state.tv ? ' • TV Display' : ''}</span>
       </footer>
     </main>
 
@@ -131,7 +136,7 @@ export const actions = {
   'tv-toggle': () => { closeModal(); toggleTV(); },
   'more-menu': () => openModal(`<h2>All sections</h2>
     <div class="more-grid">
-      ${[...NAV, SETTINGS].map(n => `<a href="#/${n.id}" data-action="close-modal" class="${n.soon ? 'is-soon' : ''}">
+      ${[...shownNav(), SETTINGS].map(n => `<a href="#/${n.id}" data-action="close-modal" class="${n.soon ? 'is-soon' : ''}">
         <span>${n.icon}</span>${esc(n.short || n.label)}</a>`).join('')}
       <button data-action="kid-mode-start"><span>🧒</span>Kid mode</button>
       <button data-action="tv-toggle"><span>📺</span>TV Display</button>
