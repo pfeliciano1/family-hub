@@ -7,15 +7,16 @@ import { esc, openModal, closeModal, toast, fmtDate, startOfToday, toISODate, sa
 import { run, refresh } from '../data.js';
 import { CATEGORIES, CATEGORY_IDS, catLabel, catIcon, metFor, calories, fmtMinutes } from './fitcalc.js';
 import { libraryView, routineById } from './fitroutines.js';
+import { planPanel } from './fitplan.js';
 
 const TABS = [['routines', '📋', 'Routines'], ['log', '📝', 'Log & history'], ['settings', '⚙️', 'Settings']];
 
 // Settings with their defaults until the person saves their own
-function profile() {
+export function profile() {
   const p = state.fitProfile || {};
   return {
     weight_lbs: p.weight_lbs ?? null,
-    // Until chosen, the calendars marked as yours count as busy
+    // Until chosen, the calendars marked as yours hold planned workouts
     workout_calendar_ids: p.user_id ? (p.workout_calendar_ids || [])
       : state.calendars.filter(c => c.member_id === state.me.id).map(c => c.id),
     slot_window_start: String(p.slot_window_start || '06:00').slice(0, 5),
@@ -41,7 +42,7 @@ export function view() {
       <p>Run <code>database/fitness.sql</code> in Supabase's SQL Editor to turn on Fitness. See "Setting up Fitness" in the README.</p></div>`;
   }
   const tab = TABS.some(t => t[0] === state.fitTab) ? state.fitTab : 'routines';
-  const body = tab === 'log' ? historyView() : tab === 'settings' ? settingsView() : libraryView();
+  const body = tab === 'log' ? historyView() : tab === 'settings' ? settingsView() : planPanel() + libraryView();
   return `<div class="page-title"><h2>🏋️ Fitness</h2>
       <button class="btn primary" data-action="fit-log-new">＋ Log a workout</button></div>
     <p class="muted fit-private">🔒 Only you can see your workouts${state.fitProfile?.show_on_family_display ? '. Your streak shows on the family display.' : '.'}</p>
@@ -190,17 +191,12 @@ function settingsView() {
         <input id="fs-lbs" name="weight_lbs" type="number" min="50" max="700" step="0.1" inputmode="decimal" value="${esc(p.weight_lbs ?? '')}">
         <small class="muted">Used for your calorie estimates only. Workouts you already logged keep the weight they were logged with.</small></div>
 
-      <h3>📅 Open workout times</h3>
-      <p class="muted">These settings are for finding free 15–30 minute slots in your day (coming in the next steps of Fitness).</p>
-      <div class="fit-cals"><b class="fit-label">Calendars that count as busy</b>
+      <h3>📅 Workout calendar</h3>
+      <p class="muted">Planned workouts are found on these calendars. Pick the Google calendar you save your workouts to.</p>
+      <div class="fit-cals"><b class="fit-label">My calendars</b>
         ${cals.length ? cals.map(c => `<label class="check opt"><input type="checkbox" name="cal" value="${esc(c.id)}" ${p.workout_calendar_ids.includes(c.id) ? 'checked' : ''}>
           <span><i class="dot" style="background:${safeColor(c.color)}"></i> ${esc(c.name)} <small class="muted">(${esc(whose(c))})</small></span></label>`).join('')
           : '<small class="muted">No calendars connected yet. Add one on the Calendar page.</small>'}
-      </div>
-      <div class="field-row fit-narrow">
-        <div class="field"><label for="fs-start">Earliest</label><input id="fs-start" name="slot_window_start" type="time" required value="${esc(p.slot_window_start)}"></div>
-        <div class="field"><label for="fs-end">Latest</label><input id="fs-end" name="slot_window_end" type="time" required value="${esc(p.slot_window_end)}"></div>
-        <div class="field"><label for="fs-buf">Gap around events (min)</label><input id="fs-buf" name="slot_buffer_min" type="number" min="0" max="60" required inputmode="numeric" value="${esc(p.slot_buffer_min)}"></div>
       </div>
 
       <h3>📺 Family display</h3>
@@ -267,14 +263,13 @@ export const forms = {
     const p = profile();
     const w = d.weight_lbs === '' ? null : numOrNull(d.weight_lbs, 50, 700);
     if (d.weight_lbs !== '' && w === null) { toast('Enter a weight between 50 and 700 lbs.', 'error'); return; }
-    if (d.slot_window_end <= d.slot_window_start) { toast('Latest has to be after earliest.', 'error'); return; }
-    const buf = numOrNull(d.slot_buffer_min, 0, 60);
     const row = {
       weight_lbs: w,
       workout_calendar_ids: [...f.querySelectorAll('input[name=cal]:checked')].map(i => i.value),
-      slot_window_start: d.slot_window_start,
-      slot_window_end: d.slot_window_end,
-      slot_buffer_min: buf === null ? 5 : Math.round(buf),
+      // No longer shown; kept as they were
+      slot_window_start: p.slot_window_start,
+      slot_window_end: p.slot_window_end,
+      slot_buffer_min: p.slot_buffer_min,
       show_on_family_display: !!d.show_on_family_display,
     };
     if (w !== p.weight_lbs) row.weight_updated_at = new Date().toISOString();

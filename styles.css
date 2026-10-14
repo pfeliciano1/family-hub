@@ -927,6 +927,21 @@ body.fit-playing { overflow: hidden; }
   .fp-clock { font-size: 52px; }
   .fp-clock.big { font-size: 80px; }
 }
+/* Weekly workout plan (Fitness phase 4) */
+.fit-planned { margin-bottom: 16px; }
+.fit-planned-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.fit-planned-head h3 { margin: 0; }
+.fit-planned .muted { margin: 4px 0 0; }
+.fit-plan { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+.fit-plan:last-child { border-bottom: 0; }
+.fit-plan .cd-main { flex: 1; min-width: 0; display: grid; }
+.fit-plan.today b { color: var(--green); }
+.fit-days { display: flex; flex-wrap: wrap; gap: 6px; }
+.fit-day { position: relative; }
+.fit-day input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.fit-day span { display: inline-block; min-width: 52px; text-align: center; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; font-weight: 600; color: var(--text-2); }
+.fit-day input:checked + span { background: var(--green); border-color: var(--green); color: #fff; }
+.fit-day input:focus-visible + span { outline: 2px solid var(--blue); outline-offset: 2px; }
 @media (max-width: 640px) {
   .fit-new { margin-left: 0; }
   .fit-grid { grid-template-columns: 1fr; }
