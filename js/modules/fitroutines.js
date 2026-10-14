@@ -75,7 +75,8 @@ function detail(r) {
         <button class="btn" data-action="fit-routine-edit" data-id="${esc(r.id)}">Edit</button>`
         : `<button class="btn" data-action="fit-routine-copy" data-id="${esc(r.id)}" title="Make your own copy to change">Duplicate to change</button>`}
       ${isMine(r) ? `<button class="btn" data-action="fit-routine-copy" data-id="${esc(r.id)}">Duplicate</button>` : ''}
-      <button class="btn primary" data-action="fit-log-routine" data-id="${esc(r.id)}">✅ I did this</button>
+      <button class="btn" data-action="fit-log-routine" data-id="${esc(r.id)}">✅ I did this</button>
+      <button class="btn primary" data-action="fit-routine-start" data-id="${esc(r.id)}">▶ Start</button>
     </div>`;
 }
 

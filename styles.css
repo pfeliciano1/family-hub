@@ -875,6 +875,58 @@ a, .link { color: var(--blue); }
 .fit-settings .check small { display: block; }
 .fit-settings .check .dot + * { margin-left: 2px; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; }
+/* Workout player (Fitness phase 3) */
+body.fit-playing { overflow: hidden; }
+#fit-player {
+  position: fixed; inset: 0; z-index: 55; background: var(--bg); display: flex; flex-direction: column;
+  padding: calc(10px + var(--safe-top)) 16px calc(12px + var(--safe-bottom)); overflow-y: auto;
+}
+.fp-top { display: flex; align-items: center; gap: 10px; max-width: 980px; width: 100%; margin: 0 auto; }
+.fp-title { flex: 1; min-width: 0; display: grid; }
+.fp-title b { font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-title small { color: var(--muted); }
+.fp-elapsed { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--text-2); }
+.fp-progress { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin: 10px auto 14px; max-width: 980px; width: 100%; }
+.fp-progress i, .fp-bar i { display: block; height: 100%; background: var(--green); border-radius: inherit; transition: width .25s linear; }
+.fp-body { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 980px; width: 100%; margin: 0 auto; }
+.fp-img { width: 100%; max-width: 520px; max-height: 42vh; aspect-ratio: 4 / 3; object-fit: contain; background: #fff; border-radius: 16px; border: 1px solid var(--line); }
+.fp-img.icon { display: grid; place-items: center; font-size: 96px; background: var(--card); }
+.fp-info { width: 100%; max-width: 520px; text-align: center; display: grid; gap: 6px; }
+.fp-name { margin: 0; font-size: 26px; line-height: 1.2; text-wrap: balance; }
+.fp-dose { margin: 0; font-size: 20px; font-weight: 600; color: var(--green); }
+.fp-dose small { color: var(--muted); font-weight: 500; font-size: 15px; }
+.fp-clock { font-size: 64px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; margin-top: 6px; }
+.fp-clock.big { font-size: 96px; }
+.fp-bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; width: 100%; max-width: 420px; margin: 0 auto; }
+.fp-how { text-align: left; margin-top: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+.fp-how summary { cursor: pointer; font-weight: 600; }
+.fp-how p { margin: 8px 0 0; color: var(--text-2); font-size: 15px; line-height: 1.5; }
+.fp-rest { width: 100%; max-width: 460px; text-align: center; display: grid; gap: 12px; padding-top: 4vh; }
+.fp-rest-label { margin: 0; font-size: 22px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: .08em; }
+.fp-rest-actions { display: flex; justify-content: center; gap: 10px; }
+.fp-upnext { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; text-align: left; margin-top: 8px; }
+.fp-upnext-row { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.fp-upnext-row span { display: grid; min-width: 0; }
+.fp-controls { display: grid; grid-template-columns: 1fr 1.4fr 1.4fr; gap: 10px; max-width: 520px; width: 100%; margin: 16px auto 0; }
+.fp-controls .btn { min-height: 54px; font-size: 18px; justify-content: center; }
+.fp-finish { background: none; border: 0; color: var(--muted); text-decoration: underline; font: inherit; font-size: 14px; margin: 10px auto 0; padding: 6px; cursor: pointer; }
+.fp-paused { position: fixed; top: calc(70px + var(--safe-top)); left: 50%; transform: translateX(-50%); background: var(--text); color: #fff; padding: 6px 16px; border-radius: 20px; font-weight: 600; }
+.fp-done { text-align: center; display: grid; gap: 12px; justify-items: center; padding-top: 8vh; }
+.fp-done-icon { font-size: 72px; }
+.fp-done h2 { margin: 0; font-size: 28px; }
+.fp-done p { margin: 0; color: var(--text-2); font-size: 18px; }
+.btn.big { min-height: 54px; font-size: 18px; padding: 0 28px; }
+@media (min-width: 900px) and (min-height: 600px) {
+  .fp-body:not(.resting) { flex-direction: row; align-items: flex-start; justify-content: center; gap: 32px; padding-top: 3vh; }
+  .fp-body:not(.resting) .fp-img { flex: 1 1 520px; max-height: 60vh; }
+  .fp-body:not(.resting) .fp-info { flex: 1 1 380px; text-align: left; }
+  .fp-body:not(.resting) .fp-bar { margin: 0; }
+}
+@media (max-width: 400px) {
+  .fp-name { font-size: 22px; }
+  .fp-clock { font-size: 52px; }
+  .fp-clock.big { font-size: 80px; }
+}
 @media (max-width: 640px) {
   .fit-new { margin-left: 0; }
   .fit-grid { grid-template-columns: 1fr; }

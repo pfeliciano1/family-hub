@@ -111,8 +111,8 @@ function historyView() {
 
 // ---------- Logging ----------
 
-// Opens the log form. { routine } for "I did this", { log } to edit,
-// nothing for a workout entered by hand.
+// Opens the log form. { routine } for "I did this", { routine, minutes, when }
+// from the workout player, { log } to edit, nothing for a workout entered by hand.
 export function openLog(opts = {}) {
   if (!hasWeight()) {
     pending = opts;
@@ -139,11 +139,12 @@ function weightForm(first) {
 const pad = n => String(n).padStart(2, '0');
 const localTime = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 
-function logForm({ routine, log } = {}) {
+// { minutes, when } come from the workout player: how long it really took
+function logForm({ routine, log, minutes: played, when: startedAt } = {}) {
   const r = routine || (log?.routine_id && routineById(log.routine_id)) || null;
-  const when = log ? new Date(log.performed_at) : new Date();
+  const when = log ? new Date(log.performed_at) : startedAt || new Date();
   const cat = log?.category || r?.category || 'cardio';
-  const minutes = log?.duration_min ?? r?.est_minutes ?? '';
+  const minutes = log?.duration_min ?? played ?? r?.est_minutes ?? '';
   return `<h2>${log ? 'Edit workout' : r ? `✅ ${esc(r.name)}` : 'Log a workout'}</h2>
     <form data-form="fit-log-save">
       <input type="hidden" name="id" value="${esc(log?.id || '')}">

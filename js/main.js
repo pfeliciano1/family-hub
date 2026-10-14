@@ -30,11 +30,12 @@ import * as home from './modules/home.js';
 import * as notify from './modules/notify.js';
 import * as fitness from './modules/fitness.js';
 import * as fitroutines from './modules/fitroutines.js';
+import * as fitplayer from './modules/fitplayer.js';
 
 // Each module contributes its own buttons (actions), forms, and checkboxes (toggles).
 const modules = [auth, shell, countdowns, tasks, grocery, settings, weather, calendar,
   chores, rewards, routines, habits, kidmode, food, recipes, findrecipes, meals, lists, gifts, projects, memories, home, notify,
-  fitness, fitroutines];
+  fitness, fitroutines, fitplayer];
 const actions = {
   'close-modal': () => closeModal(),
   'close-modal-backdrop': () => closeModal(),
